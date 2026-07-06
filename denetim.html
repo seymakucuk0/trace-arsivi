@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
+<title>TRACE — Globale Açılım Denetimi</title>
+</head>
+<body>
+<style>
+:root {
+  --bg:#f4f6f9; --panel:#ffffff; --panel-2:#fbfcfe; --ink:#191c23; --ink-2:#565d6b;
+  --ink-3:#8b93a3; --line:#e4e8ef; --line-2:#eef1f6;
+  --accent:#3b4ee0; --accent-soft:#eef0fd;
+  --green:#127a4a; --green-bg:#e7f4ec; --green-line:#bfe3cd;
+  --amber:#9a6410; --amber-bg:#fbf1de; --amber-line:#eecfa0;
+  --red:#b23a35; --red-bg:#fbe9e7; --red-line:#f0c3bd;
+  --shadow:0 1px 2px rgba(20,26,40,.04),0 4px 16px rgba(20,26,40,.05);
+  --mono:ui-monospace,"SF Mono",Menlo,"Cascadia Mono",Consolas,monospace;
+  --sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+@media (prefers-color-scheme:dark) {
+  :root {
+    --bg:#0f1116; --panel:#171a21; --panel-2:#1c2029; --ink:#e9ecf3; --ink-2:#a4acbb;
+    --ink-3:#6d7688; --line:#262b36; --line-2:#20242e;
+    --accent:#8b97ff; --accent-soft:#1e2233;
+    --green:#4bc98a; --green-bg:#14271e; --green-line:#1f4632;
+    --amber:#e6ac52; --amber-bg:#2a2113; --amber-line:#4a3a1c;
+    --red:#f0857d; --red-bg:#2b1917; --red-line:#4d2823;
+    --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.28);
+  }
+}
+:root[data-theme="light"] {
+  --bg:#f4f6f9; --panel:#ffffff; --panel-2:#fbfcfe; --ink:#191c23; --ink-2:#565d6b;
+  --ink-3:#8b93a3; --line:#e4e8ef; --line-2:#eef1f6;
+  --accent:#3b4ee0; --accent-soft:#eef0fd;
+  --green:#127a4a; --green-bg:#e7f4ec; --green-line:#bfe3cd;
+  --amber:#9a6410; --amber-bg:#fbf1de; --amber-line:#eecfa0;
+  --red:#b23a35; --red-bg:#fbe9e7; --red-line:#f0c3bd;
+  --shadow:0 1px 2px rgba(20,26,40,.04),0 4px 16px rgba(20,26,40,.05);
+}
+:root[data-theme="dark"] {
+  --bg:#0f1116; --panel:#171a21; --panel-2:#1c2029; --ink:#e9ecf3; --ink-2:#a4acbb;
+  --ink-3:#6d7688; --line:#262b36; --line-2:#20242e;
+  --accent:#8b97ff; --accent-soft:#1e2233;
+  --green:#4bc98a; --green-bg:#14271e; --green-line:#1f4632;
+  --amber:#e6ac52; --amber-bg:#2a2113; --amber-line:#4a3a1c;
+  --red:#f0857d; --red-bg:#2b1917; --red-line:#4d2823;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.28);
+}
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans);
+  line-height:1.55; -webkit-font-smoothing:antialiased; }
+.wrap { max-width:1080px; margin:0 auto; padding:clamp(20px,4vw,52px) clamp(16px,4vw,40px) 80px; }
+.eyebrow { font-family:var(--mono); font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--accent); margin:0 0 14px; font-weight:600; }
+h1 { font-size:clamp(28px,4.4vw,46px); line-height:1.05; letter-spacing:-.02em; margin:0 0 14px;
+  text-wrap:balance; font-weight:800; }
+.lede { font-size:clamp(15px,1.6vw,18px); color:var(--ink-2); max-width:64ch; margin:0 0 6px; }
+.lede b { color:var(--ink); font-weight:700; }
+.headline { margin:28px 0 8px; font-size:15px; color:var(--ink-2); }
+.headline .big { font-family:var(--mono); font-size:22px; color:var(--ink); font-weight:700; }
+
+/* stat tiles */
+.stats { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:22px 0 10px; }
+@media (max-width:640px) { .stats { grid-template-columns:1fr; } }
+.tile { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:18px 20px;
+  box-shadow:var(--shadow); position:relative; overflow:hidden; }
+.tile::before { content:""; position:absolute; left:0; top:0; bottom:0; width:4px; }
+.tile.green::before { background:var(--green); }
+.tile.amber::before { background:var(--amber); }
+.tile.red::before { background:var(--red); }
+.tile .n { font-family:var(--mono); font-size:38px; font-weight:700; line-height:1;
+  font-variant-numeric:tabular-nums; letter-spacing:-.02em; }
+.tile.green .n { color:var(--green); } .tile.amber .n { color:var(--amber); } .tile.red .n { color:var(--red); }
+.tile .lab { margin-top:8px; font-weight:700; font-size:14px; }
+.tile .sub { color:var(--ink-3); font-size:12.5px; margin-top:3px; }
+
+.legend { display:flex; flex-wrap:wrap; gap:8px 18px; margin:16px 0 4px; font-size:13px; color:var(--ink-2); }
+.legend span { display:inline-flex; align-items:center; gap:7px; }
+.dot { width:10px; height:10px; border-radius:50%; }
+.dot.green { background:var(--green); } .dot.amber { background:var(--amber); } .dot.red { background:var(--red); }
+
+.sec { margin-top:46px; }
+.sec-h { display:flex; align-items:baseline; gap:12px; margin-bottom:4px; }
+.sec-h h2 { font-size:20px; letter-spacing:-.01em; margin:0; font-weight:800; }
+.sec-h .count { font-family:var(--mono); font-size:13px; color:var(--ink-3); font-weight:600; }
+.sec-desc { color:var(--ink-2); font-size:14px; margin:0 0 18px; max-width:70ch; }
+
+.cases { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+@media (max-width:720px) { .cases { grid-template-columns:1fr; } }
+.case { border:1px solid var(--line); border-radius:12px; padding:14px 16px; background:var(--panel);
+  box-shadow:var(--shadow); }
+.case.red { background:var(--red-bg); border-color:var(--red-line); }
+.case.amber { background:var(--amber-bg); border-color:var(--amber-line); }
+.case-h { display:flex; align-items:baseline; gap:9px; }
+.case-h .num { font-family:var(--mono); font-weight:700; font-size:13px; opacity:.7; }
+.case.red .case-h .num { color:var(--red); opacity:1; }
+.case.amber .case-h .num { color:var(--amber); opacity:1; }
+.case-h h3 { font-size:15.5px; margin:0; font-weight:700; letter-spacing:-.01em; }
+.case-topic { font-family:var(--mono); font-size:11px; letter-spacing:.04em; text-transform:uppercase;
+  color:var(--ink-3); margin:5px 0 8px; }
+.case-reason { font-size:13.5px; color:var(--ink-2); margin:0; }
+.fixlabel { font-weight:700; color:var(--amber); }
+
+/* table */
+.filters { display:flex; flex-wrap:wrap; gap:8px; margin:0 0 14px; }
+.filters button { font-family:var(--mono); font-size:12.5px; letter-spacing:.03em; cursor:pointer;
+  border:1px solid var(--line); background:var(--panel); color:var(--ink-2); padding:7px 13px;
+  border-radius:999px; transition:.15s; font-weight:600; }
+.filters button:hover { border-color:var(--accent); color:var(--ink); }
+.filters button[aria-pressed="true"] { background:var(--accent-soft); border-color:var(--accent); color:var(--accent); }
+.filters button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.tablewrap { overflow-x:auto; border:1px solid var(--line); border-radius:14px; background:var(--panel); box-shadow:var(--shadow); }
+table { border-collapse:collapse; width:100%; min-width:760px; font-size:13.5px; }
+thead th { text-align:left; font-family:var(--mono); font-size:11px; letter-spacing:.07em; text-transform:uppercase;
+  color:var(--ink-3); font-weight:600; padding:12px 14px; border-bottom:1px solid var(--line); background:var(--panel-2);
+  position:sticky; top:0; }
+tbody td { padding:11px 14px; border-bottom:1px solid var(--line-2); vertical-align:top; }
+tbody tr:last-child td { border-bottom:none; }
+.c-num { font-family:var(--mono); color:var(--ink-3); font-variant-numeric:tabular-nums; width:44px; }
+.c-title { font-weight:600; min-width:210px; }
+.tr-flag { font-size:11px; }
+.c-topic { color:var(--ink-2); font-size:12.5px; white-space:nowrap; }
+.c-stars { color:var(--amber); letter-spacing:1px; white-space:nowrap; font-size:12px; }
+.c-note { color:var(--ink-2); font-size:12.5px; min-width:220px; }
+.chip { display:inline-block; font-size:11.5px; font-weight:700; padding:3px 9px; border-radius:999px; white-space:nowrap; }
+.chip.green { background:var(--green-bg); color:var(--green); border:1px solid var(--green-line); }
+.chip.amber { background:var(--amber-bg); color:var(--amber); border:1px solid var(--amber-line); }
+.chip.red { background:var(--red-bg); color:var(--red); border:1px solid var(--red-line); }
+tr.hide { display:none; }
+
+.notes { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:20px 22px; box-shadow:var(--shadow); }
+.notes ul { margin:8px 0 0; padding-left:20px; }
+.notes li { margin:7px 0; color:var(--ink-2); font-size:14px; }
+.notes li b { color:var(--ink); }
+.foot { margin-top:40px; color:var(--ink-3); font-size:12.5px; font-family:var(--mono); }
+.themebtn { position:fixed; top:14px; right:14px; z-index:20; font-family:var(--mono); font-size:12px;
+  border:1px solid var(--line); background:var(--panel); color:var(--ink-2); border-radius:999px;
+  padding:6px 12px; cursor:pointer; box-shadow:var(--shadow); }
+</style>
+
+<button class="themebtn" id="themebtn" aria-label="Tema değiştir">◑ tema</button>
+<div class="wrap">
+  <p class="eyebrow">TRACE · Globale Açılım Denetimi</p>
+  <h1>163 trace'in kaçı İngilizce'ye çevrilip globale açılabilir?</h1>
+  <p class="lede">Her zincir, kartları ve açıklamalarıyla tek tek okundu; ölçüt: <b>bir Türk oyuncu olmadan da çözülür/anlam taşır mı?</b> Bayrak (🇹🇷) meta'da güvenilir bir sinyal değil — sınıflandırma içeriğe göre yapıldı.</p>
+
+  <p class="headline"><span class="big">141 / 163</span> &nbsp;trace globale taşınabilir (%87). Geriye kalan <b>22</b> tanesi tümüyle Türkiye'ye özgü.</p>
+
+  <div class="stats">
+    <div class="tile green"><div class="n">132</div><div class="lab">Direkt uygun</div><div class="sub">Çeviri dışında dokunuş gerekmez — küresel tarih/bilim/teknoloji.</div></div>
+    <div class="tile amber"><div class="n">9</div><div class="lab">Minör düzeltmeyle uygun</div><div class="sub">Zincir evrensel; 1–2 Türkçe terim/referans yerelleştirilir.</div></div>
+    <div class="tile red"><div class="n">22</div><div class="lab">Globale uygun değil</div><div class="sub">Konunun kendisi Türk tarihi/kültürü — çeviri kurtarmaz.</div></div>
+  </div>
+  <div class="legend">
+    <span><i class="dot green"></i> Küresel bilgiyle çözülür</span>
+    <span><i class="dot amber"></i> Yerelleştirme ister</span>
+    <span><i class="dot red"></i> Türkiye'ye bağımlı</span>
+  </div>
+
+  <section class="sec">
+    <div class="sec-h"><h2>🔴 Globale uygun değil</h2><span class="count">22 trace</span></div>
+    <p class="sec-desc">Senin özellikle aradığın grup: zincirin çözümü ya da bütün anlamı Türk tarihine, kültürüne, markasına veya kurumuna dayanıyor. İngilizce'ye çevrilse bile küresel bir oyuncu için ne çözülebilir ne de öğretici olur.</p>
+    <div class="cases">
+    <article class="case red">
+  <div class="case-h"><span class="num">#4</span><h3>Kahveden İnce Belli Bardağa</h3></div>
+  <div class="case-topic">Kültür &amp; Gelenek</div>
+  <p class="case-reason">Osmanlı kahve kültürü, Rize çayı, &#x27;ince belli bardak&#x27; — baştan sona Türkiye&#x27;ye özgü çay kültürü.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#5</span><h3>Cumhuriyet Kadınından Modern Türkiye&#x27;ye</h3></div>
+  <div class="case-topic">Tarih &amp; Toplum</div>
+  <p class="case-reason">Cumhuriyet kadın hakları (1934 seçme hakkı, Afife Jale, Halet Çambel) — ulusal tarih.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#15</span><h3>Nasreddin Hoca&#x27;dan Stand-Up&#x27;a</h3></div>
+  <div class="case-topic">Türkiye &amp; Mizah Kültürü</div>
+  <p class="case-reason">Nasreddin Hoca, Ortaoyunu, Tuluat, Gırgır/Leman, Cem Yılmaz — Türk mizah geleneği.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#25</span><h3>Saray Bahçelerinden Tatil Köylerine</h3></div>
+  <div class="case-topic">Türkiye &amp; Turizm</div>
+  <p class="case-reason">Osmanlı mesire kültürü, Boğaz yalıları, Pera Palas, Bodrum/Antalya — Türk turizm tarihi.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#29</span><h3>Dokuma Tezgahından Dünya Vitrinine</h3></div>
+  <div class="case-topic">Türkiye &amp; Ekonomi</div>
+  <p class="case-reason">Anadolu el dokuması → &#x27;Made in Türkiye&#x27; tekstil ihracatı — Türk sanayi hikâyesi.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#31</span><h3>Meydan Oyunundan Stand-up’a</h3></div>
+  <div class="case-topic">Türkiye &amp; Mizah</div>
+  <p class="case-reason">Ortaoyunu, Kavuklu, Yeşilçam (Kemal Sunal/Şener Şen), Cem Yılmaz — Türk mizahı.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#46</span><h3>Demir Ağlardan Hızlı Trene</h3></div>
+  <div class="case-topic">Türkiye &amp; Ulaşım</div>
+  <p class="case-reason">Hicaz Demiryolu, &#x27;Demir Ağlarla Ördük&#x27;, Onuncu Yıl Marşı, YHT — Türk demiryolu tarihi.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#55</span><h3>Devrim Otomobili’nden TOGG’a</h3></div>
+  <div class="case-topic">Türkiye &amp; Sanayi</div>
+  <p class="case-reason">Devrim otomobili (1961), Anadol, TOGG, Bursa/Kocaeli — Türk otomotiv sanayii.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#60</span><h3>Göklerin Markası: THY</h3></div>
+  <div class="case-topic">Türkiye &amp; Havacılık</div>
+  <p class="case-reason">THY&#x27;nin kuruluş ve büyüme hikâyesi — ulusal marka. Sınırda: İstanbul aktarma merkezi küresel ilgi çekebilir ama zincir tümüyle THY&#x27;ye özel.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#63</span><h3>Köyden Kente Türkiye</h3></div>
+  <div class="case-topic">Toplum &amp; Şehirleşme</div>
+  <p class="case-reason">1950 sonrası köyden kente göç, gecekondulaşma, büyükşehir belediye sistemi — Türkiye.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#66</span><h3>Marshall Yardımı&#x27;ndan Serbest Piyasa&#x27;ya</h3></div>
+  <div class="case-topic">Türkiye &amp; Ekonomi</div>
+  <p class="case-reason">Marshall yardımı, 24 Ocak / 1980 dönüşümü — Türk ekonomi tarihi.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#71</span><h3>Galata&#x27;dan Borsa İstanbul&#x27;a</h3></div>
+  <div class="case-topic">Türkiye &amp; Ekonomi</div>
+  <p class="case-reason">Galata bankerleri, Düyun-u Umumiye, Lozan, İMKB, Borsa İstanbul — Türk finans tarihi.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#80</span><h3>Boğaz&#x27;ın Geçişinden Modern Ulaşıma</h3></div>
+  <div class="case-topic">Türkiye &amp; Mühendislik</div>
+  <p class="case-reason">İstanbul Boğazı: Şirket-i Hayriye, Boğaziçi/FSM köprüleri, Marmaray, Avrasya Tüneli.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#88</span><h3>Atatürk’ten Millî Mücadele’ye</h3></div>
+  <div class="case-topic">Tarih &amp; Liderlik</div>
+  <p class="case-reason">Atatürk ve Millî Mücadele — Türk kurtuluş tarihi.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#89</span><h3>İlk Uçuşlardan İnsansız Hava Araçlarına</h3></div>
+  <div class="case-topic">Türkiye &amp; Savunma</div>
+  <p class="case-reason">Vecihi Hürkuş, TOMTAŞ, Nuri Demirağ, Kıbrıs ambargosu, SİHA — Türk havacılık/savunma.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#91</span><h3>Köy Enstitüleri&#x27;nden Dijital Eğitime</h3></div>
+  <div class="case-topic">Türkiye &amp; Eğitim</div>
+  <p class="case-reason">Köy Enstitüleri, TRT açıköğretim, E-Okul — Türk eğitim tarihi.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#93</span><h3>Yerli Tiyatrodan Dijital Sahneye</h3></div>
+  <div class="case-topic">Kültür &amp; Sanat</div>
+  <p class="case-reason">Darülbedayi, Şehir Tiyatroları, &#x27;Arkası Yarın&#x27;, Yeşilçam — Türk tiyatro tarihi.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#99</span><h3>Köy Odasından Dijital Platformlara</h3></div>
+  <div class="case-topic">Kültür &amp; Sosyoloji</div>
+  <p class="case-reason">Köy odası, meddah, &#x27;Arkası Yarın&#x27;, Yeşilçam halk kahramanları — Türk sözlü/görsel kültür.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#103</span><h3>Karagöz ve Hacivat&#x27;tan Talk Show&#x27;a</h3></div>
+  <div class="case-topic">Kültür &amp; Mizah</div>
+  <p class="case-reason">Karagöz-Hacivat, Ortaoyunu, meddah — Türk gölge oyunu geleneği. (Meta&#x27;da bayrak yok ama içerik tümüyle Türk.)</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#104</span><h3>Eurovision: Sahnedeki Kimlik Mücadelesi</h3></div>
+  <div class="case-topic">Türkiye &amp; Müzik</div>
+  <p class="case-reason">Türkiye&#x27;nin Eurovision serüveni: TRT kararları, Sertab Erener 2003 birinciliği.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#106</span><h3>Türkiye&#x27;de Reklamcılık: Tanıtımdan Veriye</h3></div>
+  <div class="case-topic">Türkiye &amp; Medya</div>
+  <p class="case-reason">Türkiye&#x27;de reklamcılık: erken Cumhuriyet tanıtımları, TRT jingle kültürü, yerel ajanslar.</p>
+</article><article class="case red">
+  <div class="case-h"><span class="num">#125</span><h3>Atlı Tramvaydan Marmaray&#x27;a</h3></div>
+  <div class="case-topic">İstanbul &amp; Ulaşım</div>
+  <p class="case-reason">İstanbul ulaşımı: atlı tramvay → İstanbul Metrosu → Marmaray.</p>
+</article>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h"><h2>🟡 Minör adjustmentla uygun</h2><span class="count">9 trace</span></div>
+    <p class="sec-desc">Nedensellik zinciri evrensel ve sağlam; yalnızca içindeki Türkçe özel isim/deyim küresel bir eşdeğerle değiştirilirse çalışır. Zincirin mantığı korunur.</p>
+    <div class="cases">
+    <article class="case amber">
+  <div class="case-h"><span class="num">#1</span><h3>Köyden Şehir Hayatına</h3></div>
+  <div class="case-topic">Sosyoloji &amp; Yaşam</div>
+  <p class="case-reason"><span class="fixlabel">Düzeltme:</span> Zincir evrensel (traktör→makineleşme→göç→apartman). Sadece &#x27;gecekondu&#x27; + İstanbul/Ankara referanslarını nötrle.</p>
+</article><article class="case amber">
+  <div class="case-h"><span class="num">#2</span><h3>Mahalle Maçından E-Spor&#x27;a</h3></div>
+  <div class="case-topic">Spor &amp; Eğlence</div>
+  <p class="case-reason"><span class="fixlabel">Düzeltme:</span> Zincir evrensel. Tek düzeltme: &#x27;tüm Türkiye&#x27;yi birleştirdi&#x27; → &#x27;bütün bir ülke&#x27;. En hafif dokunuş.</p>
+</article><article class="case amber">
+  <div class="case-h"><span class="num">#16</span><h3>Mektuptan WhatsApp&#x27;a</h3></div>
+  <div class="case-topic">İletişim &amp; Sosyal Yaşam</div>
+  <p class="case-reason"><span class="fixlabel">Düzeltme:</span> Zincir %100 evrensel. Tek Türkçe öğe: &#x27;Nbr, kib&#x27; SMS argosu → &#x27;LOL, BRB&#x27; karşılıklarıyla değiştir. Neredeyse yeşil.</p>
+</article><article class="case amber">
+  <div class="case-h"><span class="num">#74</span><h3>Köy Kahvesinden Sosyal Medya Gruplarına</h3></div>
+  <div class="case-topic">Toplum &amp; İletişim</div>
+  <p class="case-reason"><span class="fixlabel">Düzeltme:</span> Arka plan evrensel; &#x27;köy kahvesi&#x27; ve &#x27;hemşeri dernekleri&#x27;ni &#x27;kırsal buluşma yeri&#x27; + &#x27;hemşehri/göçmen dernekleri&#x27; olarak genelleştir.</p>
+</article><article class="case amber">
+  <div class="case-h"><span class="num">#78</span><h3>Mahalle Bakkalından Süper Uygulamalara</h3></div>
+  <div class="case-topic">Türkiye &amp; Yaşam</div>
+  <p class="case-reason"><span class="fixlabel">Düzeltme:</span> Zincir evrensel (bakkal→süpermarket→e-ticaret→süper app). &#x27;Veresiye defteri/bakkal&#x27;ı nötrle; &#x27;Türkiye&#x27;den çıkan hızlı teslimat&#x27; (Getir) küresel gerçek, kalabilir.</p>
+</article><article class="case amber">
+  <div class="case-h"><span class="num">#83</span><h3>Sabundan Modern Kozmetiğe</h3></div>
+  <div class="case-topic">Sağlık &amp; Yaşam</div>
+  <p class="case-reason"><span class="fixlabel">Düzeltme:</span> Kozmetik tarihi evrensel; açılış (hamam+kolonya) ve &#x27;Markaların Türkiye&#x27;ye Girişi&#x27; adımını &#x27;banyo/kolonya&#x27; + &#x27;markaların pazara girişi&#x27; olarak yeniden yaz. Ağır uçtan minör.</p>
+</article><article class="case amber">
+  <div class="case-h"><span class="num">#87</span><h3>Tohumdan Modern Tarıma</h3></div>
+  <div class="case-topic">Türkiye &amp; Ekonomi</div>
+  <p class="case-reason"><span class="fixlabel">Düzeltme:</span> Tarım modernleşmesi evrensel; &#x27;Marshall Planı / GAP / Anadolu&#x27;yu genel mekanizasyon-sulama terimleriyle değiştir.</p>
+</article><article class="case amber">
+  <div class="case-h"><span class="num">#97</span><h3>Şehirleşmeden Akıllı Kentlere</h3></div>
+  <div class="case-topic">Türkiye &amp; Yaşam</div>
+  <p class="case-reason"><span class="fixlabel">Düzeltme:</span> Kentleşme→akıllı şehir evrensel; &#x27;gecekondu&#x27; + &#x27;TOKİ&#x27;yi &#x27;enformel yerleşim&#x27; + &#x27;kamu konut idaresi&#x27; yap. (#1 ve #63 ile aynı tema.)</p>
+</article><article class="case amber">
+  <div class="case-h"><span class="num">#98</span><h3>Klasik Yayıncılıktan Algoritmik İçeriğe</h3></div>
+  <div class="case-topic">Medya &amp; Teknoloji</div>
+  <p class="case-reason"><span class="fixlabel">Düzeltme:</span> Zincir evrensel; sadece açılış &#x27;Tek Kanallı TRT Dönemi&#x27; → &#x27;tek kanallı devlet yayıncılığı&#x27; olarak değiştir.</p>
+</article>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h"><h2>Tam liste</h2><span class="count">163 trace</span></div>
+    <p class="sec-desc">Filtrele ve tara. Not sütunu kırmızı/sarı için gerekçeyi, bazı yeşiller için de dikkat notunu içerir.</p>
+    <div class="filters">
+      <button data-f="all" aria-pressed="true">Hepsi · 163</button>
+      <button data-f="green" aria-pressed="false">🟢 Direkt · 132</button>
+      <button data-f="amber" aria-pressed="false">🟡 Minör · 9</button>
+      <button data-f="red" aria-pressed="false">🔴 Uygun değil · 22</button>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>Başlık</th><th>Konu</th><th>Zorluk</th><th>Durum</th><th>Not / gerekçe</th></tr></thead>
+        <tbody id="tbody">
+        <tr data-status="amber">
+  <td class="c-num">1</td>
+  <td class="c-title">Köyden Şehir Hayatına </td>
+  <td class="c-topic">Sosyoloji &amp; Yaşam</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip amber">Minör düzeltme</span></td>
+  <td class="c-note">Zincir evrensel (traktör→makineleşme→göç→apartman). Sadece &#x27;gecekondu&#x27; + İstanbul/Ankara referanslarını nötrle.</td>
+</tr><tr data-status="amber">
+  <td class="c-num">2</td>
+  <td class="c-title">Mahalle Maçından E-Spor&#x27;a </td>
+  <td class="c-topic">Spor &amp; Eğlence</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip amber">Minör düzeltme</span></td>
+  <td class="c-note">Zincir evrensel. Tek düzeltme: &#x27;tüm Türkiye&#x27;yi birleştirdi&#x27; → &#x27;bütün bir ülke&#x27;. En hafif dokunuş.</td>
+</tr><tr data-status="green">
+  <td class="c-num">3</td>
+  <td class="c-title">Mağara Resminden Emoji&#x27;ye </td>
+  <td class="c-topic">Sanat &amp; İletişim</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">4</td>
+  <td class="c-title">Kahveden İnce Belli Bardağa </td>
+  <td class="c-topic">Kültür &amp; Gelenek</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Osmanlı kahve kültürü, Rize çayı, &#x27;ince belli bardak&#x27; — baştan sona Türkiye&#x27;ye özgü çay kültürü.</td>
+</tr><tr data-status="red">
+  <td class="c-num">5</td>
+  <td class="c-title">Cumhuriyet Kadınından Modern Türkiye&#x27;ye <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Tarih &amp; Toplum</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Cumhuriyet kadın hakları (1934 seçme hakkı, Afife Jale, Halet Çambel) — ulusal tarih.</td>
+</tr><tr data-status="green">
+  <td class="c-num">6</td>
+  <td class="c-title">Kasetten Podcast Dünyasına </td>
+  <td class="c-topic">Medya &amp; Eğlence</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">7</td>
+  <td class="c-title">9-5 Mesaisinden Dijital Göçebeye </td>
+  <td class="c-topic">Çalışma Kültürü &amp; Teknoloji</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">8</td>
+  <td class="c-title">Bir Tuğla Duvardan Mısırbilimin Doğuşuna </td>
+  <td class="c-topic">Tarih &amp; Keşif</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">9</td>
+  <td class="c-title">Vine&#x27;dan TikTok İmparatorluğuna </td>
+  <td class="c-topic">Popüler Kültür &amp; Teknoloji</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">10</td>
+  <td class="c-title">Ekonomik Çöküşten Dünya Barışına </td>
+  <td class="c-topic">Tarih &amp; Diplomasi</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">11</td>
+  <td class="c-title">MTV&#x27;den TikTok&#x27;a </td>
+  <td class="c-topic">Medya &amp; Kültür</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">12</td>
+  <td class="c-title">Patatesten Fast Food&#x27;a </td>
+  <td class="c-topic">Tarih &amp; Yaşam</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">13</td>
+  <td class="c-title">Kodak&#x27;tan Instagram&#x27;a </td>
+  <td class="c-topic">Teknoloji &amp; Görsel Kültür</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">14</td>
+  <td class="c-title">Napster&#x27;dan Spotify&#x27;a </td>
+  <td class="c-topic">Müzik &amp; Dijital Dünya</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">15</td>
+  <td class="c-title">Nasreddin Hoca&#x27;dan Stand-Up&#x27;a </td>
+  <td class="c-topic">Türkiye &amp; Mizah Kültürü</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Nasreddin Hoca, Ortaoyunu, Tuluat, Gırgır/Leman, Cem Yılmaz — Türk mizah geleneği.</td>
+</tr><tr data-status="amber">
+  <td class="c-num">16</td>
+  <td class="c-title">Mektuptan WhatsApp&#x27;a </td>
+  <td class="c-topic">İletişim &amp; Sosyal Yaşam</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip amber">Minör düzeltme</span></td>
+  <td class="c-note">Zincir %100 evrensel. Tek Türkçe öğe: &#x27;Nbr, kib&#x27; SMS argosu → &#x27;LOL, BRB&#x27; karşılıklarıyla değiştir. Neredeyse yeşil.</td>
+</tr><tr data-status="green">
+  <td class="c-num">17</td>
+  <td class="c-title">İpek Yolu&#x27;ndan İnternet Alışverişine </td>
+  <td class="c-topic">Ticaret &amp; Ekonomi</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">18</td>
+  <td class="c-title">Pusuladan Navigasyona </td>
+  <td class="c-topic">Keşif &amp; Teknoloji</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">19</td>
+  <td class="c-title">Matbaadan Sosyal Medya Kaosuna </td>
+  <td class="c-topic">Bilgi &amp; İletişim</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">20</td>
+  <td class="c-title">Buzdolabından Süpermarkete </td>
+  <td class="c-topic">Yaşam &amp; Teknoloji</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">21</td>
+  <td class="c-title">Seri Üretimden Online Alışverişe </td>
+  <td class="c-topic">Ekonomi &amp; Tüketim</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">22</td>
+  <td class="c-title">Kanat Çırpmaktan Dünya Seyahatlerine </td>
+  <td class="c-topic">Havacılık &amp; Keşif</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">23</td>
+  <td class="c-title">Gramofondan Kablosuz Kulaklığa </td>
+  <td class="c-topic">Müzik &amp; Teknoloji</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">24</td>
+  <td class="c-title">Klimadan Yaz Tatili Patlamasına </td>
+  <td class="c-topic">Yaşam &amp; Turizm</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">25</td>
+  <td class="c-title">Saray Bahçelerinden Tatil Köylerine </td>
+  <td class="c-topic">Türkiye &amp; Turizm</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Osmanlı mesire kültürü, Boğaz yalıları, Pera Palas, Bodrum/Antalya — Türk turizm tarihi.</td>
+</tr><tr data-status="green">
+  <td class="c-num">26</td>
+  <td class="c-title">Ansiklopediden Yapay Zekaya </td>
+  <td class="c-topic">Bilgi &amp; Gelecek</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">27</td>
+  <td class="c-title">Baruttan Dinamite: Gücün Kontrolü </td>
+  <td class="c-topic">Teknoloji &amp; Tarih</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">28</td>
+  <td class="c-title">Antik Roma Atlarından Uzay Mekiğine </td>
+  <td class="c-topic">Teknoloji &amp; Standartlar</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">29</td>
+  <td class="c-title">Dokuma Tezgahından Dünya Vitrinine <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Ekonomi</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Anadolu el dokuması → &#x27;Made in Türkiye&#x27; tekstil ihracatı — Türk sanayi hikâyesi.</td>
+</tr><tr data-status="green">
+  <td class="c-num">30</td>
+  <td class="c-title">Marka Algısından Algı Yönetimine </td>
+  <td class="c-topic">Pazarlama &amp; Psikoloji</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">31</td>
+  <td class="c-title">Meydan Oyunundan Stand-up’a <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Mizah</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Ortaoyunu, Kavuklu, Yeşilçam (Kemal Sunal/Şener Şen), Cem Yılmaz — Türk mizahı.</td>
+</tr><tr data-status="green">
+  <td class="c-num">32</td>
+  <td class="c-title">Kara Veba&#x27;dan Modern İşçi Haklarına </td>
+  <td class="c-topic">Tarih &amp; Ekonomi</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">33</td>
+  <td class="c-title">Dijital Gizlilik ve Snowden&#x27;ın Keşfi </td>
+  <td class="c-topic">Siyaset &amp; Dijital Haklar</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">34</td>
+  <td class="c-title">Bosman&#x27;dan 222 Milyon Euro&#x27;ya </td>
+  <td class="c-topic">Spor &amp; Ekonomi</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">35</td>
+  <td class="c-title">Lego&#x27;dan GitHub&#x27;a </td>
+  <td class="c-topic">Tasarım &amp; Yazılım</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">36</td>
+  <td class="c-title">Napolyon&#x27;dan Amazon&#x27;a </td>
+  <td class="c-topic">Tarih &amp; Teknoloji</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">37</td>
+  <td class="c-title">Pamuk&#x27;tan Hollywood&#x27;a </td>
+  <td class="c-topic">Kültür &amp; Sinema</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">38</td>
+  <td class="c-title">Çernobil&#x27;den Güneş Enerjisine </td>
+  <td class="c-topic">Enerji &amp; Çevre</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">39</td>
+  <td class="c-title">Balina&#x27;dan Plastik Krizine </td>
+  <td class="c-topic">Çevre &amp; Sanayi</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">40</td>
+  <td class="c-title">Plastik Ördeklerden AB Yasağına </td>
+  <td class="c-topic">Çevre &amp; Hukuk</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">41</td>
+  <td class="c-title">Fotoğraftan Kamuoyuna </td>
+  <td class="c-topic">Gazetecilik &amp; Tarih</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">42</td>
+  <td class="c-title">Voltaire’den Modern Laikliğe </td>
+  <td class="c-topic">Felsefe &amp; Toplum</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">43</td>
+  <td class="c-title">Haritadan Konum Atmaya </td>
+  <td class="c-topic">Coğrafya &amp; Teknoloji</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">44</td>
+  <td class="c-title">Penisilin’den Antibiyotik Direncine </td>
+  <td class="c-topic">Sağlık &amp; Bilim</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">45</td>
+  <td class="c-title">Kahvehaneden Ofis Kültürüne </td>
+  <td class="c-topic">Kültür &amp; İş Dünyası</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note">İçerik küresel: &#x27;İstanbul kahvehaneleri&#x27; tarihsel olarak doğru ve evrensel (kahvehanenin doğduğu yer) — sorun değil.</td>
+</tr><tr data-status="red">
+  <td class="c-num">46</td>
+  <td class="c-title">Demir Ağlardan Hızlı Trene <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Ulaşım</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Hicaz Demiryolu, &#x27;Demir Ağlarla Ördük&#x27;, Onuncu Yıl Marşı, YHT — Türk demiryolu tarihi.</td>
+</tr><tr data-status="green">
+  <td class="c-num">47</td>
+  <td class="c-title">Cazın Özgürlüğünden Rock Yıldızlarına </td>
+  <td class="c-topic">Müzik &amp; Toplum</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">48</td>
+  <td class="c-title">Korseden Mini Eteğe </td>
+  <td class="c-topic">Moda &amp; Kadın Hakları</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">49</td>
+  <td class="c-title">Satrançtan AlphaGo&#x27;ya </td>
+  <td class="c-topic">Oyun &amp; Yapay Zeka</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">50</td>
+  <td class="c-title">Hindistan&#x27;dan Market Rafına </td>
+  <td class="c-topic">Ekonomi &amp; Tarih</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">51</td>
+  <td class="c-title">İlk Bilgisayardan Akıllı Saatlere </td>
+  <td class="c-topic">Teknoloji &amp; Yaşam</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">52</td>
+  <td class="c-title">Pamuk Tarlasından Hızlı Modaya </td>
+  <td class="c-topic">Ekonomi &amp; Tarih</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">53</td>
+  <td class="c-title">Sezar Şifresinden Kripto Paraya </td>
+  <td class="c-topic">Teknoloji &amp; Matematik</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">54</td>
+  <td class="c-title">Ampulden Akıllı Şehirlere </td>
+  <td class="c-topic">Teknoloji &amp; Yaşam</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">55</td>
+  <td class="c-title">Devrim Otomobili’nden TOGG’a <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Sanayi</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Devrim otomobili (1961), Anadol, TOGG, Bursa/Kocaeli — Türk otomotiv sanayii.</td>
+</tr><tr data-status="green">
+  <td class="c-num">56</td>
+  <td class="c-title">Mağara Resminden TRACE’e </td>
+  <td class="c-topic">Bilgi &amp; İnsanlık</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note">İçerik küresel (ürünün kendi hikâyesi) — ama son adımın (TRACE) açıklaması BOŞ. Veri eksiği doldurulmalı.</td>
+</tr><tr data-status="green">
+  <td class="c-num">57</td>
+  <td class="c-title">Emoji&#x27;den Dijital Duygulara </td>
+  <td class="c-topic">Teknoloji &amp; Dil</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">58</td>
+  <td class="c-title">Arama Motorundan Reklam Devine </td>
+  <td class="c-topic">Teknoloji &amp; Ekonomi</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">59</td>
+  <td class="c-title">Korsan Müzikten Abonelik Çağına </td>
+  <td class="c-topic">Müzik &amp; Ekonomi</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">60</td>
+  <td class="c-title">Göklerin Markası: THY <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Havacılık</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">THY&#x27;nin kuruluş ve büyüme hikâyesi — ulusal marka. Sınırda: İstanbul aktarma merkezi küresel ilgi çekebilir ama zincir tümüyle THY&#x27;ye özel.</td>
+</tr><tr data-status="green">
+  <td class="c-num">61</td>
+  <td class="c-title">Satranç&#x27;tan Yapay Genel Zeka&#x27;ya </td>
+  <td class="c-topic">Teknoloji &amp; Yapay Zeka</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">62</td>
+  <td class="c-title">Wright Kardeşler&#x27;den Bilet Algoritmalarına </td>
+  <td class="c-topic">Havacılık &amp; Teknoloji</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">63</td>
+  <td class="c-title">Köyden Kente Türkiye <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Toplum &amp; Şehirleşme</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">1950 sonrası köyden kente göç, gecekondulaşma, büyükşehir belediye sistemi — Türkiye.</td>
+</tr><tr data-status="green">
+  <td class="c-num">64</td>
+  <td class="c-title">LAN Party&#x27;den E-Spor Arenalarına </td>
+  <td class="c-topic">Popüler Kültür &amp; Oyun</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">65</td>
+  <td class="c-title">Buz Satışından Soğuk Zincir&#x27;e </td>
+  <td class="c-topic">Teknoloji &amp; Sağlık</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">66</td>
+  <td class="c-title">Marshall Yardımı&#x27;ndan Serbest Piyasa&#x27;ya <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Ekonomi</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Marshall yardımı, 24 Ocak / 1980 dönüşümü — Türk ekonomi tarihi.</td>
+</tr><tr data-status="green">
+  <td class="c-num">67</td>
+  <td class="c-title">Reality TV&#x27;den Influencer Ekonomisine </td>
+  <td class="c-topic">Popüler Kültür &amp; Ekonomi</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">68</td>
+  <td class="c-title">Gazeteden Yankı Odalarına </td>
+  <td class="c-topic">Medya &amp; Toplum</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">69</td>
+  <td class="c-title">Mikroçiplerden Akıllı Dünyaya </td>
+  <td class="c-topic">Teknoloji</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">70</td>
+  <td class="c-title">Telefondan Sanal Evrene </td>
+  <td class="c-topic">Teknoloji &amp; İletişim</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">71</td>
+  <td class="c-title">Galata&#x27;dan Borsa İstanbul&#x27;a </td>
+  <td class="c-topic">Türkiye &amp; Ekonomi</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Galata bankerleri, Düyun-u Umumiye, Lozan, İMKB, Borsa İstanbul — Türk finans tarihi.</td>
+</tr><tr data-status="green">
+  <td class="c-num">72</td>
+  <td class="c-title">Kağıt Paradan Dijital Cüzdana </td>
+  <td class="c-topic">Ekonomi &amp; Finans</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">73</td>
+  <td class="c-title">Analog Fotoğraftan Filtre Kültürüne </td>
+  <td class="c-topic">Teknoloji &amp; Sanat</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="amber">
+  <td class="c-num">74</td>
+  <td class="c-title">Köy Kahvesinden Sosyal Medya Gruplarına <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Toplum &amp; İletişim</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip amber">Minör düzeltme</span></td>
+  <td class="c-note">Arka plan evrensel; &#x27;köy kahvesi&#x27; ve &#x27;hemşeri dernekleri&#x27;ni &#x27;kırsal buluşma yeri&#x27; + &#x27;hemşehri/göçmen dernekleri&#x27; olarak genelleştir.</td>
+</tr><tr data-status="green">
+  <td class="c-num">75</td>
+  <td class="c-title">Büyük Mağazalardan Tek Tıkla Alışverişe </td>
+  <td class="c-topic">Ekonomi &amp; Yaşam</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">76</td>
+  <td class="c-title">Ansiklopediden Kolektif Akla </td>
+  <td class="c-topic">Bilgi &amp; Teknoloji</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">77</td>
+  <td class="c-title">Mektuptan Saniyeler İçinde Bağlantıya </td>
+  <td class="c-topic">İletişim</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="amber">
+  <td class="c-num">78</td>
+  <td class="c-title">Mahalle Bakkalından Süper Uygulamalara <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Yaşam</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip amber">Minör düzeltme</span></td>
+  <td class="c-note">Zincir evrensel (bakkal→süpermarket→e-ticaret→süper app). &#x27;Veresiye defteri/bakkal&#x27;ı nötrle; &#x27;Türkiye&#x27;den çıkan hızlı teslimat&#x27; (Getir) küresel gerçek, kalabilir.</td>
+</tr><tr data-status="green">
+  <td class="c-num">79</td>
+  <td class="c-title">Olimpiyat Ruhu&#x27;ndan Dopingle Mücadele&#x27;ye </td>
+  <td class="c-topic">Spor &amp; Etik</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">80</td>
+  <td class="c-title">Boğaz&#x27;ın Geçişinden Modern Ulaşıma <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Mühendislik</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">İstanbul Boğazı: Şirket-i Hayriye, Boğaziçi/FSM köprüleri, Marmaray, Avrasya Tüneli.</td>
+</tr><tr data-status="green">
+  <td class="c-num">81</td>
+  <td class="c-title">Fotoroman&#x27;dan Fan Fiction&#x27;a </td>
+  <td class="c-topic">Popüler Kültür &amp; Medya</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">82</td>
+  <td class="c-title">İlk Telgraftan Küresel Ağa </td>
+  <td class="c-topic">İletişim</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="amber">
+  <td class="c-num">83</td>
+  <td class="c-title">Sabundan Modern Kozmetiğe <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Sağlık &amp; Yaşam</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip amber">Minör düzeltme</span></td>
+  <td class="c-note">Kozmetik tarihi evrensel; açılış (hamam+kolonya) ve &#x27;Markaların Türkiye&#x27;ye Girişi&#x27; adımını &#x27;banyo/kolonya&#x27; + &#x27;markaların pazara girişi&#x27; olarak yeniden yaz. Ağır uçtan minör.</td>
+</tr><tr data-status="green">
+  <td class="c-num">84</td>
+  <td class="c-title">Pusuladan Otonom Sürüşe </td>
+  <td class="c-topic">Teknoloji &amp; Ulaşım</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">85</td>
+  <td class="c-title">Mahalle Maçından E-Spor Arena&#x27;sına </td>
+  <td class="c-topic">Spor &amp; Kültür</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note">İçerik küresel — ama başlangıç kartı BOŞ (veri hatası) ve #2&#x27;nin kopyası.</td>
+</tr><tr data-status="green">
+  <td class="c-num">86</td>
+  <td class="c-title">Kütüphaneden Arama Motoruna </td>
+  <td class="c-topic">Bilgi &amp; Teknoloji</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="amber">
+  <td class="c-num">87</td>
+  <td class="c-title">Tohumdan Modern Tarıma <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Ekonomi</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip amber">Minör düzeltme</span></td>
+  <td class="c-note">Tarım modernleşmesi evrensel; &#x27;Marshall Planı / GAP / Anadolu&#x27;yu genel mekanizasyon-sulama terimleriyle değiştir.</td>
+</tr><tr data-status="red">
+  <td class="c-num">88</td>
+  <td class="c-title">Atatürk’ten Millî Mücadele’ye <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Tarih &amp; Liderlik</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Atatürk ve Millî Mücadele — Türk kurtuluş tarihi.</td>
+</tr><tr data-status="red">
+  <td class="c-num">89</td>
+  <td class="c-title">İlk Uçuşlardan İnsansız Hava Araçlarına <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Savunma</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Vecihi Hürkuş, TOMTAŞ, Nuri Demirağ, Kıbrıs ambargosu, SİHA — Türk havacılık/savunma.</td>
+</tr><tr data-status="green">
+  <td class="c-num">90</td>
+  <td class="c-title">Ay Yarışı&#x27;ndan Mars Hayali&#x27;ne </td>
+  <td class="c-topic">Uzay &amp; Teknoloji</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">91</td>
+  <td class="c-title">Köy Enstitüleri&#x27;nden Dijital Eğitime <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Eğitim</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Köy Enstitüleri, TRT açıköğretim, E-Okul — Türk eğitim tarihi.</td>
+</tr><tr data-status="green">
+  <td class="c-num">92</td>
+  <td class="c-title">El Sıkışmadan Kripto Güvenliğine </td>
+  <td class="c-topic">Ekonomi &amp; Teknoloji</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">93</td>
+  <td class="c-title">Yerli Tiyatrodan Dijital Sahneye <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Kültür &amp; Sanat</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Darülbedayi, Şehir Tiyatroları, &#x27;Arkası Yarın&#x27;, Yeşilçam — Türk tiyatro tarihi.</td>
+</tr><tr data-status="green">
+  <td class="c-num">94</td>
+  <td class="c-title">Web 1.0&#x27;dan Karanlık Web&#x27;e </td>
+  <td class="c-topic">Teknoloji &amp; İnternet</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">95</td>
+  <td class="c-title">Fabrika Düzeninden Uzaktan Çalışmaya </td>
+  <td class="c-topic">İş Dünyası &amp; Yaşam</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">96</td>
+  <td class="c-title">Gençlik Hareketlerinden Sosyal Aktivizme <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Toplum &amp; Siyaset</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note">Meta&#x27;da 🇹🇷 var ama içerik tamamen nötr (1968 kuşağı, STK, hashtag). Bayrağı kaldır, olduğu gibi globale uygun.</td>
+</tr><tr data-status="amber">
+  <td class="c-num">97</td>
+  <td class="c-title">Şehirleşmeden Akıllı Kentlere <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Yaşam</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip amber">Minör düzeltme</span></td>
+  <td class="c-note">Kentleşme→akıllı şehir evrensel; &#x27;gecekondu&#x27; + &#x27;TOKİ&#x27;yi &#x27;enformel yerleşim&#x27; + &#x27;kamu konut idaresi&#x27; yap. (#1 ve #63 ile aynı tema.)</td>
+</tr><tr data-status="amber">
+  <td class="c-num">98</td>
+  <td class="c-title">Klasik Yayıncılıktan Algoritmik İçeriğe </td>
+  <td class="c-topic">Medya &amp; Teknoloji</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip amber">Minör düzeltme</span></td>
+  <td class="c-note">Zincir evrensel; sadece açılış &#x27;Tek Kanallı TRT Dönemi&#x27; → &#x27;tek kanallı devlet yayıncılığı&#x27; olarak değiştir.</td>
+</tr><tr data-status="red">
+  <td class="c-num">99</td>
+  <td class="c-title">Köy Odasından Dijital Platformlara <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Kültür &amp; Sosyoloji</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Köy odası, meddah, &#x27;Arkası Yarın&#x27;, Yeşilçam halk kahramanları — Türk sözlü/görsel kültür.</td>
+</tr><tr data-status="green">
+  <td class="c-num">100</td>
+  <td class="c-title">Buhar Makinesinden Karanlık Fabrikalara </td>
+  <td class="c-topic">Teknoloji &amp; Sanayi</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">101</td>
+  <td class="c-title">Esnaf Çıraklığından Startup Kuruculuğuna </td>
+  <td class="c-topic">Ekonomi &amp; Girişimcilik</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">102</td>
+  <td class="c-title">Mekanik Hesaplamadan Tekillik (Singularity) Hayaline </td>
+  <td class="c-topic">Felsefe &amp; Teknoloji (Final)</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">103</td>
+  <td class="c-title">Karagöz ve Hacivat&#x27;tan Talk Show&#x27;a </td>
+  <td class="c-topic">Kültür &amp; Mizah</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Karagöz-Hacivat, Ortaoyunu, meddah — Türk gölge oyunu geleneği. (Meta&#x27;da bayrak yok ama içerik tümüyle Türk.)</td>
+</tr><tr data-status="red">
+  <td class="c-num">104</td>
+  <td class="c-title">Eurovision: Sahnedeki Kimlik Mücadelesi <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Müzik</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Türkiye&#x27;nin Eurovision serüveni: TRT kararları, Sertab Erener 2003 birinciliği.</td>
+</tr><tr data-status="green">
+  <td class="c-num">105</td>
+  <td class="c-title">Video Oyunları: Donanımdan Buluta Evrim </td>
+  <td class="c-topic">Teknoloji &amp; Eğlence</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">106</td>
+  <td class="c-title">Türkiye&#x27;de Reklamcılık: Tanıtımdan Veriye <span class="tr-flag" title="Meta&#39;da Türkiye bayrağı">🇹🇷</span></td>
+  <td class="c-topic">Türkiye &amp; Medya</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">Türkiye&#x27;de reklamcılık: erken Cumhuriyet tanıtımları, TRT jingle kültürü, yerel ajanslar.</td>
+</tr><tr data-status="green">
+  <td class="c-num">107</td>
+  <td class="c-title">Pokémon Kartından Dijital Sahipliğe </td>
+  <td class="c-topic">Popüler Kültür &amp; Teknoloji</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">108</td>
+  <td class="c-title">Gençlik Hostellerinden Kira Krizine </td>
+  <td class="c-topic">Dünya &amp; Toplum</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">109</td>
+  <td class="c-title">İlandan Kaydırmalı Eşleşmeye </td>
+  <td class="c-topic">Toplum &amp; Teknoloji</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">110</td>
+  <td class="c-title">Tek Maaştan Yan Gelire </td>
+  <td class="c-topic">Çalışma Kültürü &amp; Ekonomi</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">111</td>
+  <td class="c-title">Lip-Sync&#x27;ten TikTok&#x27;a </td>
+  <td class="c-topic">İnternet Kültürü</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">112</td>
+  <td class="c-title">FarmVille&#x27;den Günlük Mobil Oyunlara </td>
+  <td class="c-topic">Oyun &amp; Teknoloji</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">113</td>
+  <td class="c-title">Çelik Termostan Stanley Çılgınlığına </td>
+  <td class="c-topic">Tüketim Kültürü</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">114</td>
+  <td class="c-title">IMDb Puanından Letterboxd Kültürüne </td>
+  <td class="c-topic">İnternet &amp; Sinema Kültürü</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">115</td>
+  <td class="c-title">Soğuk Savaş Uydusundan Cep Telefonu Navigasyonuna </td>
+  <td class="c-topic">Teknoloji &amp; Tarih</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">116</td>
+  <td class="c-title">Eczane Toniğinden Coca-Cola&#x27;ya </td>
+  <td class="c-topic">Tüketim &amp; Marka Tarihi</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">117</td>
+  <td class="c-title">Sahil Jimnastiğinden Fitness Endüstrisine </td>
+  <td class="c-topic">Sağlık &amp; Yaşam Tarzı</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">118</td>
+  <td class="c-title">Radar Tüpünden Mikrodalga Fırına </td>
+  <td class="c-topic">Teknoloji &amp; Günlük Hayat</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">119</td>
+  <td class="c-title">Yol Kazalarından Trafik Kurallarına </td>
+  <td class="c-topic">Toplum &amp; Günlük Hayat</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">120</td>
+  <td class="c-title">Gezici Sirkten Tema Parkına </td>
+  <td class="c-topic">Eğlence &amp; Kültür</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">121</td>
+  <td class="c-title">Sokak Dansından Küresel Müzik Akımına </td>
+  <td class="c-topic">Müzik &amp; Kültür</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">122</td>
+  <td class="c-title">Bir Volkandan Modern Arkeolojiye </td>
+  <td class="c-topic">Tarih &amp; Keşif</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">123</td>
+  <td class="c-title">Bir Savaştan Modern Pasaporta </td>
+  <td class="c-topic">Tarih &amp; Toplum</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">124</td>
+  <td class="c-title">Sıtma&#x27;dan Yapay Zekâ Devrimine </td>
+  <td class="c-topic">Bilim &amp; Teknoloji</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="red">
+  <td class="c-num">125</td>
+  <td class="c-title">Atlı Tramvaydan Marmaray&#x27;a </td>
+  <td class="c-topic">İstanbul &amp; Ulaşım</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip red">Uygun değil</span></td>
+  <td class="c-note">İstanbul ulaşımı: atlı tramvay → İstanbul Metrosu → Marmaray.</td>
+</tr><tr data-status="green">
+  <td class="c-num">126</td>
+  <td class="c-title">Bisiklet Patlamasından Havacılık Çağına </td>
+  <td class="c-topic">Teknoloji &amp; Mühendislik</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">127</td>
+  <td class="c-title">Konserve Kutusundan Küresel Süpermarketlere </td>
+  <td class="c-topic">Gıda &amp; Ticaret</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">128</td>
+  <td class="c-title">Diş Macunundan Plastik Kirliliğine </td>
+  <td class="c-topic">Çevre &amp; Tüketim Tarihi</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">129</td>
+  <td class="c-title">Balık Ağlarından Kripto Paraya </td>
+  <td class="c-topic">Teknoloji &amp; Bilgi Teorisi</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">130</td>
+  <td class="c-title">Balina Avcılığından Petrol Devlerine </td>
+  <td class="c-topic">Sanayi &amp; Çevre Tarihi</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">131</td>
+  <td class="c-title">Mikrodalgadan Akıllı Füzelere </td>
+  <td class="c-topic">Teknoloji &amp; Askeri Tarih</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">132</td>
+  <td class="c-title">Dikenli Telden Amerika Sınırlarına </td>
+  <td class="c-topic">Siyasi &amp; Coğrafi Tarih</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">133</td>
+  <td class="c-title">Saat Kulesinden İşçi Ayaklanmalarına </td>
+  <td class="c-topic">Sosyoloji &amp; Emek Tarihi</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">134</td>
+  <td class="c-title">Mikroskoptan Akıllı Şehirlere </td>
+  <td class="c-topic">Bilim &amp; Şehircilik</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">135</td>
+  <td class="c-title">Kömür Madenlerinden Küresel Isınmaya </td>
+  <td class="c-topic">Sanayi &amp; İklim</td>
+  <td class="c-stars">★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">136</td>
+  <td class="c-title">Hayvan İç Organlarından Pop Müziğe </td>
+  <td class="c-topic">Müzik &amp; Teknoloji</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">137</td>
+  <td class="c-title">Deniz Kabuğundan Kripto Para Madenciliğine </td>
+  <td class="c-topic">Finans &amp; Teknoloji</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">138</td>
+  <td class="c-title">Patlayan Şişeden Şampanyaya </td>
+  <td class="c-topic">Bilim &amp; Gastronomi</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">139</td>
+  <td class="c-title">Tesadüfi Mor Boyadan Aspirine </td>
+  <td class="c-topic">Kimya &amp; Sağlık</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">140</td>
+  <td class="c-title">Hac Yolundan Banka Çekine </td>
+  <td class="c-topic">Tarih &amp; Finans</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">141</td>
+  <td class="c-title">Güldürücü Gazdan Genel Anesteziye </td>
+  <td class="c-topic">Sağlık &amp; Bilim</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">142</td>
+  <td class="c-title">Gemi Kurdundan Metro Tüneline </td>
+  <td class="c-topic">Mühendislik &amp; Doğa</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">143</td>
+  <td class="c-title">Tuz Vergisinden Hindistan&#x27;ın Bağımsızlığına </td>
+  <td class="c-topic">Tarih &amp; Direniş</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">144</td>
+  <td class="c-title">Çalınan Tablonun Macerası </td>
+  <td class="c-topic">Sanat &amp; Medya</td>
+  <td class="c-stars">★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">145</td>
+  <td class="c-title">Sokak Mısırından Sinema Büfesi Ekonomisine </td>
+  <td class="c-topic">Sinema &amp; Ekonomi</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">146</td>
+  <td class="c-title">Demir Perde Ardındaki Oyundan Tetris&#x27;e </td>
+  <td class="c-topic">Oyun &amp; Soğuk Savaş</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">147</td>
+  <td class="c-title">Saray Kan Hastalığından Romanov Hanedanının Çöküşüne </td>
+  <td class="c-topic">Tarih &amp; İktidar</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">148</td>
+  <td class="c-title">Sığır İlacından İnsanlarda Kuduz Salgınına </td>
+  <td class="c-topic">Doğa &amp; Sağlık</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">149</td>
+  <td class="c-title">Çöp Bekleyen Kurttan Tescilli Köpek Irklarına </td>
+  <td class="c-topic">Doğa &amp; Tarih</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">150</td>
+  <td class="c-title">Veba Karantinasından Televizyon Reytingine </td>
+  <td class="c-topic">Toplum &amp; Medya Ölçümü</td>
+  <td class="c-stars">★★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">151</td>
+  <td class="c-title">Kraliyet Portresinden Profil Fotoğrafına </td>
+  <td class="c-topic">Görsel Kültür &amp; Kimlik</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">152</td>
+  <td class="c-title">Savaş Paraşütünden Naylon Çorap Kuyruğuna </td>
+  <td class="c-topic">Moda &amp; Savaş Ekonomisi</td>
+  <td class="c-stars">★★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">153</td>
+  <td class="c-title">Ameliyat Eldiveninden Bulaşık Eldivenine </td>
+  <td class="c-topic">Sağlık &amp; Ev Yaşamı</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">154</td>
+  <td class="c-title">Kurbağa Bacağından Pil Teknolojisine </td>
+  <td class="c-topic">Bilim &amp; Teknoloji</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">155</td>
+  <td class="c-title">Deniz Kabuğundan Banka Kartına </td>
+  <td class="c-topic">Ekonomi &amp; Para Tarihi</td>
+  <td class="c-stars">★★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">156</td>
+  <td class="c-title">At Arabası İzinden Trafik Şeridine </td>
+  <td class="c-topic">Ulaşım &amp; Şehir</td>
+  <td class="c-stars">★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">157</td>
+  <td class="c-title">Tuz Sandığından Küresel Lojistiğe </td>
+  <td class="c-topic">Gıda &amp; Ticaret</td>
+  <td class="c-stars">★★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">158</td>
+  <td class="c-title">Saat Kulesinden Mesai Kaydına </td>
+  <td class="c-topic">Çalışma Kültürü &amp; Zaman</td>
+  <td class="c-stars">★★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">159</td>
+  <td class="c-title">Lale Soğanından Finansal Balona </td>
+  <td class="c-topic">Ekonomi Tarihi</td>
+  <td class="c-stars">★★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">160</td>
+  <td class="c-title">Köle Gemisinden Pop Müzik Endüstrisine </td>
+  <td class="c-topic">Dünya Tarihi &amp; Müzik</td>
+  <td class="c-stars">★★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">161</td>
+  <td class="c-title">Kervan Hanından Otel Puanlama Sistemine </td>
+  <td class="c-topic">Seyahat &amp; İnternet</td>
+  <td class="c-stars">★★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note">&#x27;Kervan hanı&#x27; = caravanserai; küresel olarak bilinen tarihsel kavram, sorun değil.</td>
+</tr><tr data-status="green">
+  <td class="c-num">162</td>
+  <td class="c-title">Mezopotamya Kil Tabletinden E-Faturaya </td>
+  <td class="c-topic">Ekonomi &amp; Bürokrasi</td>
+  <td class="c-stars">★★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr><tr data-status="green">
+  <td class="c-num">163</td>
+  <td class="c-title">Köy Pazarı Tartısından Kalori Takibine </td>
+  <td class="c-topic">Gıda &amp; Gündelik Yaşam</td>
+  <td class="c-stars">★★★★</td>
+  <td class="c-status"><span class="chip green">Direkt uygun</span></td>
+  <td class="c-note"></td>
+</tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="sec">
+    <div class="sec-h"><h2>Veri &amp; tasarım notları</h2></div>
+    <div class="notes">
+      <ul>
+        <li><b>#85</b> — başlangıç kartı BOŞ (veri hatası) ve içerik <b>#2</b> ile birebir aynı (e-spor). Biri elenebilir.</li>
+        <li><b>#56</b> — son adımın (TRACE) açıklaması BOŞ. İçerik küresel ama metin tamamlanmalı.</li>
+        <li><b>#81</b> — 7 adım içeriyor (diğer tüm trace'ler 6 adım). Kasıtlı mı, kontrol et.</li>
+        <li><b>#96</b> — meta'da 🇹🇷 var ama içerik tamamen nötr (1968 kuşağı, STK, hashtag). Bayrağı kaldır; olduğu gibi globale uygun. Yani "bayrak = yerel" varsayımı yanıltıcı.</li>
+        <li><b>Tema tekrarları</b> (globalde tek tutulabilir): kentleşme #1/#63/#97 · e-spor #2/#64/#85 · ansiklopedi→YZ #26/#76/#86 · Napster→Spotify #14/#59 · satranç→YZ #49/#61 · kripto/blockchain #53/#92/#129/#137 · navigasyon/GPS #18/#43/#84/#115 · mikrodalga/radar #118/#131 · saat→emek #133/#158 · havacılık #22/#62/#126.</li>
+        <li><b>Sınırda kırmızılar</b>: #60 (THY — İstanbul aktarma merkezi küresel ilgi çekebilir) ve #29 (tekstil) yeniden kurgulanırsa küresel bir "havacılık/tekstil" hikâyesine dönüşebilir; ama bu minör değil, yeniden yazım gerektirir.</li>
+      </ul>
+    </div>
+  </section>
+
+  <p class="foot">163 trace · içerik tek tek okundu · sınıflandırma metne göre yapıldı</p>
+</div>
+
+<script>
+(function(){
+  var btns=[].slice.call(document.querySelectorAll('.filters button'));
+  var rows=[].slice.call(document.querySelectorAll('#tbody tr'));
+  btns.forEach(function(b){
+    b.addEventListener('click',function(){
+      btns.forEach(function(x){x.setAttribute('aria-pressed', x===b ? 'true':'false');});
+      var f=b.getAttribute('data-f');
+      rows.forEach(function(r){
+        r.classList.toggle('hide', !(f==='all' || r.getAttribute('data-status')===f));
+      });
+    });
+  });
+  var tb=document.getElementById('themebtn'), root=document.documentElement;
+  tb.addEventListener('click',function(){
+    var cur=root.getAttribute('data-theme');
+    if(!cur){ cur=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'; }
+    root.setAttribute('data-theme', cur==='dark'?'light':'dark');
+  });
+})();
+</script>
+</body>
+</html>
