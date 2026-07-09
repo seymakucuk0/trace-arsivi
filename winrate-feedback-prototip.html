@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRACE — %X Tamamladı + Feedback · Tıklanabilir Prototip</title>
+<style>
+  :root{
+    /* TRACE paleti (ekran görüntülerinden) */
+    --bg:#d9c7a3; --sheet:#f7edd8; --sheet2:#f3e6c8;
+    --ink:#2f2013; --ink2:#5a4527; --muted:#8a7350;
+    --gold:#f4b942; --gold2:#e8a51f; --gold-soft:#f8d98a;
+    --brown:#3a2a17; --brown2:#241708;
+    --green:#2e7d4f; --green-soft:#e4f2e7;
+    --red:#c0392b; --red-soft:#fbe7e2;
+    --line:#d9c493;
+    /* Doc paleti */
+    --doc-bg:#f5f1ea; --doc-card:#ffffff; --doc-line:#e3dcce;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:var(--doc-bg);color:#2a2418;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+  .layout{display:grid;grid-template-columns:400px 1fr;gap:34px;max-width:1180px;margin:0 auto;padding:36px 24px 80px}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+  /* ---------- SOL PANEL ---------- */
+  .panel h1{font-size:21px;margin-bottom:4px}
+  .panel .sub{font-size:13px;color:#7a6c52;margin-bottom:20px}
+  .ctrl{background:var(--doc-card);border:1px solid var(--doc-line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+  .ctrl h3{font-size:11px;letter-spacing:1.6px;text-transform:uppercase;color:#a3874a;margin-bottom:10px;font-weight:800}
+  .seg{display:flex;gap:8px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:110px;padding:9px 12px;border-radius:10px;border:1.5px solid var(--doc-line);
+    background:#faf7f0;font-size:13px;font-weight:700;cursor:pointer;color:#5a4b33;transition:.15s}
+  .seg button.on{background:var(--brown);color:var(--gold);border-color:var(--brown)}
+  .seg button:hover:not(.on){border-color:#c4b48f}
+  .resetbtn{width:100%;margin-top:4px;padding:9px;border-radius:10px;border:1.5px dashed #cbbb92;
+    background:transparent;font-size:12.5px;font-weight:700;color:#8a7350;cursor:pointer}
+  .resetbtn:hover{background:#f3ecdd}
+
+  .note{background:var(--doc-card);border:1px solid var(--doc-line);border-radius:14px;padding:16px 18px;margin-bottom:14px}
+  .note h4{font-size:13.5px;margin-bottom:6px;display:flex;align-items:center;gap:7px}
+  .note h4 .b{flex:none;width:20px;height:20px;border-radius:6px;background:var(--gold);color:#3a2712;
+    display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+  .note p{font-size:12.5px;color:#5f5340}
+  .note p+p{margin-top:6px}
+  .note b{color:#2a2418}
+
+  /* ---------- TELEFON ---------- */
+  .stage{display:flex;flex-direction:column;align-items:center;gap:14px;position:sticky;top:24px;align-self:start}
+  @media(max-width:900px){.stage{position:static}}
+  .screen-tabs{display:flex;gap:8px}
+  .screen-tabs button{padding:7px 16px;border-radius:100px;border:1.5px solid var(--doc-line);background:#faf7f0;
+    font-size:12.5px;font-weight:700;color:#5a4b33;cursor:pointer}
+  .screen-tabs button.on{background:var(--gold);border-color:var(--gold2);color:#3a2712}
+
+  .phone{width:375px;height:760px;background:var(--bg);border:11px solid #17100a;border-radius:44px;
+    overflow:hidden;position:relative;box-shadow:0 24px 60px rgba(40,25,10,.35)}
+  .scr{position:absolute;inset:0;display:none;flex-direction:column}
+  .scr.on{display:flex}
+
+  /* oyun arkaplanı (sonuç ekranı altı) */
+  .gamebg{position:absolute;inset:0;background:var(--bg);filter:blur(0);display:flex;flex-direction:column;align-items:center;padding-top:26px;gap:6px}
+  .gamebg .logo{font-weight:900;font-size:26px;letter-spacing:2px;color:#3a2a17}
+  .gamebg .logo span{background:#3a2a17;color:#f6ecd0;padding:2px 6px;border-radius:7px;margin:0 1px;display:inline-block}
+  .gamebg .tag{font-size:9px;letter-spacing:2px;color:#8a7350;font-weight:700}
+  .dim{position:absolute;inset:0;background:rgba(58,42,23,.35);backdrop-filter:blur(2px)}
+
+  /* sonuç kartı */
+  .result-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:18px}
+  .result{width:100%;max-width:330px;background:linear-gradient(180deg,#fdf4dd,#f6e7c3);border-radius:26px;
+    padding:0 0 18px;position:relative;box-shadow:0 16px 44px rgba(40,25,10,.4)}
+  .result.win{border:3px solid var(--green)}
+  .result.lose{border:3px solid var(--red)}
+  .ribbon{position:absolute;top:-16px;left:50%;transform:translateX(-50%);padding:7px 34px;border-radius:12px;
+    font-size:13px;font-weight:900;letter-spacing:1.5px;color:#fff}
+  .result.win .ribbon{background:var(--green)}
+  .result.lose .ribbon{background:var(--red)}
+  .result .inner{padding:26px 20px 0}
+  .errline{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--ink2)}
+  .errline .cnt{color:var(--red);font-weight:900}
+  .result h2{font-size:25px;font-weight:900;color:var(--ink);margin:6px 0 10px}
+  .meta-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .coin{background:var(--brown2);color:#f6ecd0;font-size:12px;font-weight:800;border-radius:100px;padding:5px 12px;display:flex;gap:8px;align-items:center}
+  .coin .crown{color:var(--gold)}
+  .hearts{background:#fbf1d9;border-radius:100px;padding:5px 10px;font-size:12px;letter-spacing:2px}
+
+  /* 🆕 winrate satırı */
+  .winrate{border-radius:14px;padding:10px 13px;font-size:12.5px;font-weight:700;line-height:1.45;
+    display:flex;gap:9px;align-items:flex-start;margin-bottom:12px;animation:pop .4s ease}
+  .winrate .ico{flex:none;font-size:16px;margin-top:1px}
+  .result.win .winrate{background:var(--green-soft);color:#20603c;border:1.5px solid #bcdfc6}
+  .result.lose .winrate{background:#f7efdc;color:#5a4527;border:1.5px solid #e0d2ab}
+  .winrate.cold{background:#fff6dd !important;color:#8a6a1c !important;border:1.5px solid #eed48f !important}
+  .winrate .bar{height:5px;background:rgba(0,0,0,.1);border-radius:100px;margin-top:6px;overflow:hidden}
+  .winrate .bar i{display:block;height:100%;width:42%;background:currentColor;border-radius:100px}
+  @keyframes pop{0%{transform:scale(.94);opacity:0}100%{transform:scale(1);opacity:1}}
+
+  .chain{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  .cnode{border-radius:11px;padding:9px 11px;font-size:12px;font-weight:800;display:flex;align-items:center;gap:8px;color:#3a2b16}
+  .cnode .ix{flex:none;width:17px;height:17px;border-radius:5px;background:#c0392b;color:#fff;font-size:9.5px;
+    display:flex;align-items:center;justify-content:center;font-weight:900}
+  .cnode.dark{background:var(--brown2);color:#f6ecd0}
+  .cnode.mid{background:linear-gradient(180deg,#f7c445,#eda92a);box-shadow:0 2px 0 #c8861a}
+  .cnode .st{margin-left:auto;font-size:11px}
+  .primary-btn{display:block;width:100%;padding:13px;border:none;border-radius:100px;cursor:pointer;
+    background:linear-gradient(180deg,#f7c445,#eda92a);box-shadow:0 3px 0 #c8861a;
+    font-size:14.5px;font-weight:800;color:#3a2712;font-family:inherit}
+  .primary-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #c8861a}
+  .mini-btn{padding:8px 15px;border:1.5px solid var(--line);border-radius:100px;cursor:pointer;
+    background:#fffaf0;font-size:12px;font-weight:800;color:var(--ink2);font-family:inherit;
+    display:inline-flex;align-items:center;gap:5px;transition:.15s}
+  .mini-btn:hover{border-color:var(--gold2);background:#fff6dd}
+  .mini-btn:active{transform:translateY(1px)}
+
+  /* ---------- İSTATİSTİK EKRANI ---------- */
+  .stats-scr{background:var(--bg)}
+  .stats-top{display:flex;align-items:center;justify-content:center;padding:16px 18px 10px;position:relative}
+  .stats-top .logo{font-weight:900;font-size:19px;letter-spacing:1.5px;color:#3a2a17}
+  .stats-top .logo span{background:#3a2a17;color:#f6ecd0;padding:1px 5px;border-radius:5px;margin:0 1px;display:inline-block;font-size:15px}
+  .sheet{flex:1;background:var(--sheet);border-radius:26px 26px 0 0;overflow-y:auto;padding:22px 20px 40px;
+    scrollbar-width:thin}
+  .sheet h2{font-size:21px;font-weight:900;letter-spacing:.5px;color:var(--ink);margin-bottom:16px}
+  .metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:20px}
+  .metric{text-align:center}
+  .metric .v{font-size:30px;font-weight:900;color:#4a3417}
+  .metric .l{font-size:10.5px;color:var(--ink2);line-height:1.25;margin-top:2px}
+  .metric+.metric{border-left:1px solid var(--line)}
+  .sec-title{font-size:15px;font-weight:900;color:var(--ink);margin:20px 0 10px}
+
+  /* 🆕 feedback modülü */
+  .fb{background:#fffaf0;border:1.5px solid var(--line);border-radius:18px;padding:15px 16px;position:relative;overflow:hidden}
+  .fb .q{font-size:14.5px;font-weight:800;color:var(--ink)}
+  .fb .hint{font-size:11px;color:var(--muted);margin-top:2px}
+  .fb-votes{display:flex;gap:10px;margin-top:12px}
+  .fb-votes button{flex:1;padding:11px;border-radius:13px;border:1.5px solid var(--line);background:#fff;
+    font-size:13.5px;font-weight:800;cursor:pointer;color:#4a3a1f;font-family:inherit;transition:.15s;display:flex;align-items:center;justify-content:center;gap:7px}
+  .fb-votes button:hover{border-color:var(--gold2);transform:translateY(-1px)}
+  .fb-votes button .e{font-size:17px}
+  .fb-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;animation:pop .3s ease}
+  .fb-chips button{padding:8px 13px;border-radius:100px;border:1.5px solid var(--line);background:#fff;
+    font-size:12px;font-weight:700;color:#4a3a1f;cursor:pointer;font-family:inherit;transition:.15s}
+  .fb-chips button:hover{border-color:var(--gold2);background:#fff8e6}
+  .fb-skip{margin-top:10px;background:none;border:none;font-size:11.5px;color:var(--muted);cursor:pointer;
+    text-decoration:underline;font-family:inherit;padding:0}
+  .fb-thanks{text-align:center;padding:6px 0 2px;animation:pop .35s ease}
+  .fb-thanks .big{font-size:26px}
+  .fb-thanks .t1{font-size:14px;font-weight:800;color:var(--ink);margin-top:4px}
+  .fb-thanks .t2{font-size:12px;color:var(--ink2);margin-top:6px;background:var(--green-soft);
+    border-radius:10px;padding:8px 10px;display:inline-block}
+  .fb-back{font-size:12px;font-weight:800;color:var(--ink2)}
+  /* winrate dipnotu — feedback kartının içinde, sessiz */
+  .fb-stat{margin-top:13px;padding-top:11px;border-top:1px dashed var(--line);
+    font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:7px}
+  .fb-stat b{color:var(--ink2)}
+  .fb-stat .microbar{flex:1;max-width:74px;height:4px;background:#efe2bd;border-radius:100px;overflow:hidden}
+  .fb-stat .microbar i{display:block;height:100%;width:42%;background:var(--gold2);border-radius:100px}
+
+  /* paylaşım kartı */
+  .share{background:linear-gradient(180deg,#f3dfae,#eccf92);border:1.5px solid #d9bd7d;border-radius:18px;padding:14px 16px}
+  .share .t{font-size:15px;font-weight:900;color:var(--ink)}
+  .share .grid{display:flex;align-items:center;gap:5px;margin:12px 0}
+  .share .sq{width:26px;height:26px;border-radius:7px;background:linear-gradient(180deg,#f7c445,#eda92a);
+    display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;font-weight:900}
+  .share .sq.dark{background:var(--brown2)}
+  .share .arrow{color:#b0452c;font-size:11px;letter-spacing:-1px}
+  .share .foot{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:var(--ink2)}
+  .share .badge-line{margin-top:8px;font-size:11.5px;font-weight:800;color:#20603c;background:var(--green-soft);
+    border-radius:9px;padding:6px 9px;display:none}
+  .share .badge-line.on{display:block}
+  .share .paylas{background:none;border:none;font-weight:900;font-size:12.5px;color:var(--ink);cursor:pointer;
+    display:flex;align-items:center;gap:5px;font-family:inherit}
+
+  /* 🆕 bugünün trace'i topluluk bloğu */
+  .today{background:#fffaf0;border:1.5px solid var(--line);border-radius:18px;padding:15px 16px}
+  .today .row{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;font-weight:700;color:var(--ink2)}
+  .today .row b{color:var(--ink);font-size:14px}
+  .tbar{height:9px;background:#efe2bd;border-radius:100px;margin:8px 0 14px;overflow:hidden;position:relative}
+  .tbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f7c445,#e8961e);border-radius:100px;transition:width .8s ease}
+  .today .mini{display:flex;gap:10px}
+  .today .mini .cell{flex:1;background:#fff;border:1px solid var(--line);border-radius:12px;padding:9px 10px;text-align:center}
+  .today .mini .cv{font-size:16px;font-weight:900;color:#4a3417}
+  .today .mini .cl{font-size:9.5px;color:var(--muted);line-height:1.3;margin-top:2px}
+  .hardest{margin-top:12px;background:#fdf3f0;border:1px solid #f0d4cb;border-radius:12px;padding:10px 12px}
+  .hardest .hl{font-size:11.5px;font-weight:800;color:#8c2f22}
+  .hlinks{display:flex;align-items:center;gap:3px;margin-top:8px}
+  .hlink{flex:1;height:22px;border-radius:6px;background:#f0e3bd;display:flex;align-items:center;justify-content:center;
+    font-size:9px;font-weight:900;color:#a3874a}
+  .hlink.hot{background:#e8604a;color:#fff;box-shadow:0 0 0 2px #f6b5a8}
+  .cold-note{font-size:11.5px;color:#8a6a1c;background:#fff6dd;border:1px solid #eed48f;border-radius:10px;padding:9px 11px;font-weight:700}
+
+  .prem{background:linear-gradient(135deg,#f7bf3f,#eda21a);border-radius:16px;padding:14px 16px;margin-top:20px;
+    font-size:13.5px;font-weight:800;color:#3a2712}
+  .prem small{display:block;font-size:10.5px;letter-spacing:1px;margin-top:5px;font-weight:900}
+  .rozet-hint{display:flex;justify-content:space-between;align-items:baseline;margin-top:20px}
+  .rozet-hint .t{font-size:15px;font-weight:900;color:var(--ink)}
+  .rozet-hint .c{font-size:13px;font-weight:900;color:var(--ink2)}
+  .hexrow{display:flex;gap:10px;margin-top:10px;opacity:.85}
+  .hex{width:64px;height:58px;background:#e7d9b4;clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
+    display:flex;align-items:center;justify-content:center;font-size:20px}
+  .hex.won{background:linear-gradient(180deg,#f7c445,#eda92a)}
+
+  .flow-note{font-size:11px;color:#98876a;text-align:center;max-width:375px}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ================= SOL PANEL ================= -->
+  <div class="panel">
+    <h1>%X Tamamladı + Feedback</h1>
+    <div class="sub">Tıklanabilir prototip · sonuç popup'ı → istatistik akışı · TRACE görsel diline uyarlanmış</div>
+
+    <div class="ctrl">
+      <h3>Senaryo</h3>
+      <div class="seg" id="segScenario">
+        <button data-s="win" class="on">🏆 Kazandın</button>
+        <button data-s="lose">💔 Kaybettin</button>
+      </div>
+    </div>
+
+    <div class="ctrl">
+      <h3>Veri Durumu</h3>
+      <div class="seg" id="segData">
+        <button data-d="normal" class="on">Normal gün (%42)</button>
+        <button data-d="cold">Gece 00:05 · veri az</button>
+      </div>
+    </div>
+
+    <div class="ctrl">
+      <h3>Prototip</h3>
+      <button class="resetbtn" id="btnReset">↺ Feedback'i ve akışı sıfırla</button>
+    </div>
+
+    <div class="note">
+      <h4><span class="b">1</span> Winrate → sonuç kartında tek satır, nötr dil</h4>
+      <p>Duygusal tepe anı burası. Metin her iki durumda da aynı ve nötr:
+      <b>"Bugün kullanıcıların %42'si zinciri başarıyla tamamlayabildi."</b>
+      Duygu metinle değil <b>renkle</b> verilir: kazanana yeşil, kaybedene nötr krem —
+      kaybedeni kırmızıyla azarlamayız, veri kendi teselli işini görür ("%58 de yapamamış").</p>
+      <p>Oyun öncesi asla gösterilmez: düşük oran caydırır, yüksek oran baskı kurar.</p>
+    </div>
+
+    <div class="note">
+      <h4><span class="b">2</span> Cold start = feature</h4>
+      <p>Gece ilk oynayanlarda örneklem yok. Yüzde göstermek yerine <b>"İlk çözenlerdensin ⚡"</b> rozet-hissi verilir.
+      Eşik önerisi: ≥100 oyuncu olunca yüzdeye geç. Soldan "Gece 00:05" seçip dene.</p>
+    </div>
+
+    <div class="note">
+      <h4><span class="b">3</span> Feedback: popup değil, akış içi · maks 2 dokunuş</h4>
+      <p>İstatistik ekranının üst kısmında, paylaşımın hemen üstünde. <b>👍/👎 → sebep chip'i → teşekkür.</b>
+      Gönder butonu yok; chip'e dokunmak = göndermek. Atlanabilir, hiçbir şeyi bloklamaz.</p>
+      <p>Chip'ler içerik ekibinin aksiyon dilinde: <b>"Seçenekler kafa karıştırdı"</b> = decoy sorunu,
+      <b>"Konu sıkıcıydı"</b> = tema sorunu. Trace ID bazında toplanınca editoryal dashboard'un hammaddesi olur.</p>
+    </div>
+
+    <div class="note">
+      <h4><span class="b">4</span> Teşekkür: nötr ve katkı odaklı</h4>
+      <p>Oy sonrası topluluk beğeni yüzdesi <b>gösterilmez</b> — "kim beğendi kim beğenmedi" tartışması açmayız,
+      azınlıkta kalan oyuncuya "yanlış oy verdin" hissi yaşatmayız.</p>
+      <p>Bunun yerine mesaj katkıya bağlanır: <b>"Görüşün Trace'i geliştirmemizde bize yol gösterecek."</b>
+      Oyuncu fikrinin ürüne dokunduğunu hisseder → ertesi gün tekrar oy verme motivasyonu buradan gelir.</p>
+    </div>
+
+    <div class="note">
+      <h4><span class="b">5</span> Topluluk oranı: ayrı blok değil, dipnot</h4>
+      <p>"%X" bilgisi kendi bölümü olmaktan çıkarıldı; feedback kartının altına <b>sessiz bir dipnot</b>
+      olarak gömüldü: <b>"Bugün oyuncuların %42'si zinciri tamamlamayı başardı."</b>
+      Ayrı başlık + kart, hak ettiğinden fazla görsel ağırlık veriyordu.</p>
+      <p>Paylaşım kartına yüzde <b>konmadı</b> — paylaşım kartı kullanıcının kendi performansına ait kalır;
+      topluluk verisi tek yerde (feedback dipnotu + sonuç kartı satırı) yaşar.</p>
+    </div>
+  </div>
+
+  <!-- ================= TELEFON ================= -->
+  <div class="stage">
+    <div class="screen-tabs" id="tabs">
+      <button data-scr="result" class="on">1 · Sonuç Popup'ı</button>
+      <button data-scr="stats">2 · İstatistikler</button>
+    </div>
+
+    <div class="phone">
+
+      <!-- ======= EKRAN 1: SONUÇ ======= -->
+      <div class="scr on" id="scrResult">
+        <div class="gamebg">
+          <div class="logo"><span>T</span><span>R</span><span>A</span><span>C</span><span>E</span></div>
+          <div class="tag">HER ŞEYİN BİR SEBEBİ VAR</div>
+        </div>
+        <div class="dim"></div>
+        <div class="result-wrap">
+          <div class="result win" id="resultCard">
+            <div class="ribbon" id="ribbon">KAZANDIN</div>
+            <div class="inner">
+              <div class="errline"><span style="color:var(--red)">✕</span> Toplam hata sayısı <span class="cnt" id="errCnt">1</span></div>
+              <h2 id="resultTitle">Zincir tamamlandı!</h2>
+              <div class="meta-row">
+                <div class="coin"><span class="crown">👑</span> 897 &nbsp;·&nbsp; 00:59</div>
+                <div class="hearts" id="heartsEl">❤️❤️🤍</div>
+              </div>
+
+              <!-- 🆕 WINRATE SATIRI -->
+              <div class="winrate" id="winrateBox">
+                <span class="ico" id="wrIco">🏅</span>
+                <div style="flex:1">
+                  <span id="wrText">Bugün oyuncuların <b>%42</b>'si zinciri tamamladı — sen de aralarındasın!</span>
+                  <div class="bar" id="wrBar"><i></i></div>
+                </div>
+              </div>
+
+              <div class="chain" id="chainEl"></div>
+              <div style="display:flex;justify-content:flex-end">
+                <button class="mini-btn" id="btnToStats">📊 İstatistikler</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======= EKRAN 2: İSTATİSTİK ======= -->
+      <div class="scr stats-scr" id="scrStats">
+        <div class="stats-top">
+          <div class="logo"><span>T</span><span>R</span><span>A</span><span>C</span><span>E</span></div>
+        </div>
+        <div class="sheet">
+          <h2>İSTATİSTİKLER</h2>
+
+          <div class="metrics">
+            <div class="metric"><div class="v">2</div><div class="l">Oyun<br>Sayısı</div></div>
+            <div class="metric"><div class="v">50</div><div class="l">Kazanma<br>Oranı</div></div>
+            <div class="metric"><div class="v">1</div><div class="l">Şu anki<br>seri</div></div>
+            <div class="metric"><div class="v">1</div><div class="l">Seri<br>Rekoru</div></div>
+          </div>
+
+          <!-- 🆕 FEEDBACK MODÜLÜ -->
+          <div class="fb" id="fbBox">
+            <!-- js dolduruyor -->
+          </div>
+
+          <!-- PAYLAŞIM -->
+          <div class="sec-title">Sonucunu paylaş</div>
+          <div class="share">
+            <div class="t">Baruttan Dinamite: Gücün Kontrolü</div>
+            <div class="grid">
+              <div class="sq dark"></div><span class="arrow">→</span>
+              <div class="sq">✓</div><span class="arrow">→</span>
+              <div class="sq">✓</div><span class="arrow">→</span>
+              <div class="sq">✓</div><span class="arrow">→</span>
+              <div class="sq">✓</div><span class="arrow">→</span>
+              <div class="sq">✓</div><span class="arrow">→</span>
+              <div class="sq dark"></div>
+            </div>
+            <div class="foot" style="margin-top:10px">
+              <span>⏱ 0:59 &nbsp;|&nbsp; 195 puan &nbsp;|&nbsp; Seri: 1</span>
+              <button class="paylas">Paylaş <span style="font-size:15px">➦</span></button>
+            </div>
+          </div>
+
+          <!-- premium (mevcudun devamı) -->
+          <div class="prem">Reklamsız Bundle Games deneyimi için:<small>PREMIUM'A GEÇ →</small></div>
+
+          <div class="rozet-hint">
+            <span class="t">Rozetlerin</span><span class="c">2/8</span>
+          </div>
+          <div class="hexrow">
+            <div class="hex won">🔗</div><div class="hex">📅</div><div class="hex">🎯</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="flow-note">Akış: oyun biter → sonuç popup'ı (winrate satırıyla) → "Sonuçlarını Gör" → istatistikler
+    (feedback + topluluk bloğu). Üstteki sekmelerle iki ekran arasında gezinebilirsin.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const S = { scenario:'win', data:'normal', screen:'result', fb:'idle', fbVote:null };
+
+  const $ = s => document.querySelector(s);
+  const scrResult = $('#scrResult'), scrStats = $('#scrStats');
+
+  /* ---------- senaryo & veri kontrolleri ---------- */
+  document.querySelectorAll('#segScenario button').forEach(b=>{
+    b.onclick=()=>{ S.scenario=b.dataset.s; setSeg('#segScenario',b); render(); };
+  });
+  document.querySelectorAll('#segData button').forEach(b=>{
+    b.onclick=()=>{ S.data=b.dataset.d; setSeg('#segData',b); render(); };
+  });
+  function setSeg(sel,btn){ document.querySelectorAll(sel+' button').forEach(x=>x.classList.toggle('on',x===btn)); }
+
+  $('#btnReset').onclick=()=>{ S.fb='idle'; S.fbVote=null; S.screen='result'; render(); };
+
+  /* ---------- ekran sekmeleri ---------- */
+  document.querySelectorAll('#tabs button').forEach(b=>{
+    b.onclick=()=>{ S.screen=b.dataset.scr; render(); };
+  });
+  $('#btnToStats').onclick=()=>{ S.screen='stats'; render(); };
+
+  /* ---------- zincir (sonuç kartı) ---------- */
+  const CHAIN_WIN = [
+    {t:"Çin'de Barutun İcadı",dark:1},
+    {t:"İpek Yolu ile Batı Ticareti",st:'✅'},
+    {t:"Ateşli Silahlar Devri",st:'✅'},
+    {t:"Madencilikte Patlamalar",st:'❌✅'},
+    {t:"Alfred Nobel ve Nitrogliserin",st:'✅'},
+    {t:"Küresel Altyapı Devrimi",st:'✅'},
+    {t:"Dinamitin Patenti",dark:1}
+  ];
+  const CHAIN_LOSE = [
+    {t:"Çin'de Barutun İcadı",dark:1},
+    {t:"İpek Yolu ile Batı Ticareti",st:'✅'},
+    {t:"Ateşli Silahlar Devri",st:'❌❌✅'},
+    {t:"Madencilikte Patlamalar",st:'❌'},
+    {t:"— zincir burada kırıldı —",empty:1},
+    {t:"Dinamitin Patenti",dark:1}
+  ];
+
+  function renderChain(){
+    const arr = S.scenario==='win'?CHAIN_WIN:CHAIN_LOSE;
+    $('#chainEl').innerHTML = arr.map((n,i)=>{
+      if(n.empty) return `<div class="cnode" style="background:transparent;border:2px dashed var(--line);color:#a3874a;justify-content:center;font-weight:700">${n.t}</div>`;
+      const cls = n.dark?'dark':'mid';
+      return `<div class="cnode ${cls}"><span class="ix">${n.dark?(i===0?1:7):i+1}.</span> ${n.t}${n.st?`<span class="st">${n.st}</span>`:''}</div>`;
+    }).join('');
+  }
+
+  /* ---------- winrate ---------- */
+  function renderWinrate(){
+    const box=$('#winrateBox'), txt=$('#wrText'), ico=$('#wrIco'), bar=$('#wrBar');
+    box.classList.remove('cold');
+    if(S.data==='cold'){
+      box.classList.add('cold');
+      ico.textContent='⚡';
+      txt.innerHTML = `<b>İlk çözenlerdensin!</b> Günün istatistikleri oyuncular biriktikçe burada oluşacak.`;
+      bar.style.display='none';
+      return;
+    }
+    bar.style.display='block';
+    txt.innerHTML = `Bugün kullanıcıların <b>%42</b>'si zinciri başarıyla tamamlayabildi.`;
+    ico.textContent = S.scenario==='win' ? '🏅' : '🔗';
+  }
+
+  /* ---------- sonuç kartı ---------- */
+  function renderResult(){
+    const card=$('#resultCard');
+    card.className='result '+S.scenario;
+    $('#ribbon').textContent = S.scenario==='win'?'KAZANDIN':'KAZANAMADIN';
+    $('#resultTitle').textContent = S.scenario==='win'?'Zincir tamamlandı!':'Trace kırıldı';
+    $('#errCnt').textContent = S.scenario==='win'?'1':'3';
+    $('#heartsEl').textContent = S.scenario==='win'?'❤️❤️🤍':'🤍🤍🤍';
+    renderWinrate(); renderChain();
+  }
+
+  /* ---------- feedback modülü ---------- */
+  const CHIPS = {
+    up:  ['📚 Öğreticiydi','🌊 Akıcıydı','💡 Konu ilginçti'],
+    down:['🥱 Çok kolaydı','🧗 Çok zordu','🌀 Seçenekler kafa karıştırdı','😴 Konu sıkıcıydı']
+  };
+
+  function fbStatLine(){
+    if(S.data==='cold'){
+      return `<div class="fb-stat">⚡ <b>Günün ilk çözenlerindensin</b> — topluluk oranı oyuncular biriktikçe burada görünecek.</div>`;
+    }
+    return `<div class="fb-stat">🔗 Bugün oyuncuların <b>%42</b>'si zinciri tamamlamayı başardı
+      <span class="microbar"><i></i></span></div>`;
+  }
+
+  function renderFb(){
+    const box=$('#fbBox');
+    if(S.fb==='idle'){
+      box.innerHTML = `
+        <div class="q">Bugünün trace'i nasıldı?</div>
+        <div class="hint">Baruttan Dinamite: Gücün Kontrolü · görüşün içerik ekibine gider</div>
+        <div class="fb-votes">
+          <button id="fbUp"><span class="e">👍</span> İyiydi</button>
+          <button id="fbDown"><span class="e">👎</span> Olmamış</button>
+        </div>` + fbStatLine();
+      $('#fbUp').onclick=()=>{S.fbVote='up';S.fb='chips';renderFb();};
+      $('#fbDown').onclick=()=>{S.fbVote='down';S.fb='chips';renderFb();};
+    }
+    else if(S.fb==='chips'){
+      const chips = CHIPS[S.fbVote].map((c,i)=>`<button data-i="${i}">${c}</button>`).join('');
+      box.innerHTML = `
+        <div class="fb-back">${S.fbVote==='up'?'👍 İyiydi':'👎 Olmamış'} — peki neden?</div>
+        <div class="fb-chips">${chips}</div>
+        <button class="fb-skip" id="fbSkip">geç, sadece oyum kalsın</button>` + fbStatLine();
+      box.querySelectorAll('.fb-chips button').forEach(b=>{
+        b.onclick=()=>{S.fb='done';renderFb();};
+      });
+      $('#fbSkip').onclick=()=>{S.fb='done';renderFb();};
+    }
+    else{
+      box.innerHTML = `
+        <div class="fb-thanks">
+          <div class="big">🧡</div>
+          <div class="t1">Teşekkürler!</div>
+          <div class="t2">Görüşün Trace'i geliştirmemizde bize yol gösterecek.</div>
+        </div>` + fbStatLine();
+    }
+  }
+
+  /* ---------- ana render ---------- */
+  function render(){
+    scrResult.classList.toggle('on',S.screen==='result');
+    scrStats.classList.toggle('on',S.screen==='stats');
+    document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.scr===S.screen));
+    renderResult(); renderFb();
+  }
+
+  render();
+})();
+</script>
+</body>
+</html>
