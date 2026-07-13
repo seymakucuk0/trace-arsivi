@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TRACE — Yayındaki Tasarım · Hedefli Prototip</title>
+<style>
+  :root{
+    --gold:#F5A623; --gold2:#FFC85C; --gold-deep:#B26F14;
+    --brown:#3A2412; --brown2:#2C1A0B;
+    --cream:#FBF3DC; --panel:#EFDFB6; --slot:#E9D6AB;
+    --ink:#3B2413; --red:#D9403A; --green:#2E9E5B;
+    --goalA:#7A2E1C; --goalB:#521E0E;
+    --rw:357px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
+  body{
+    background:#D9C69B;display:flex;align-items:center;justify-content:center;
+    font-family:-apple-system,"SF Pro Rounded","Segoe UI",system-ui,sans-serif;overflow:hidden;
+  }
+  #fit{width:402px;height:874px;flex:none;transform-origin:center center}
+  .phone{
+    position:relative;width:402px;height:874px;display:flex;flex-direction:column;
+    user-select:none;-webkit-user-select:none;
+    background:
+      radial-gradient(120% 50% at 50% -4%, #FDF2D4 0%, transparent 55%),
+      linear-gradient(180deg,#F6E9C8,#EFDCB2 60%,#EAD3A2);
+    overflow:hidden;border-radius:clamp(0px,3vw,34px);
+    box-shadow:0 0 0 1px rgba(90,60,20,.25),0 30px 80px rgba(60,35,10,.35);
+  }
+
+  /* ---------- header ---------- */
+  header{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;padding:18px 22px 0}
+  .hbtn{
+    width:36px;height:36px;border-radius:50%;border:none;cursor:pointer;font-size:14px;font-weight:800;
+    display:flex;align-items:center;justify-content:center;color:#F7E7C8;
+    background:radial-gradient(circle at 35% 30%,#8A6A42,#5E4326);
+    box-shadow:inset 0 0 0 2px rgba(247,231,200,.35), 0 2px 5px rgba(70,45,15,.3);
+  }
+  .hgroup{display:flex;gap:8px}
+  .logo{text-align:center}
+  .logo .tiles{display:flex;gap:2.5px;justify-content:center}
+  .logo .tiles span{
+    background:linear-gradient(180deg,#5B3A1B,#3E2610);color:#F7E3B9;font-weight:900;font-size:17px;
+    width:24px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:6px;
+    box-shadow:0 2px 0 #2A1706, inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  .logo .tiles span:nth-child(2){transform:rotate(3deg) translateY(-1px)}
+  .logo .tiles span:nth-child(4){transform:rotate(-3deg) translateY(1px)}
+  .logo small{display:block;margin-top:4px;font-size:7.5px;letter-spacing:2.4px;color:#8A6A42;font-weight:800}
+
+  /* ---------- HUD ---------- */
+  .hud{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;padding:16px 22px 0}
+  .scorep{display:flex;align-items:center;gap:7px;background:#2C1A0B;border-radius:999px;padding:4px 6px 4px 4px;color:#fff;font-weight:800;font-size:15px}
+  .scorep .crown{width:26px;height:26px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FF8A72,var(--red));display:flex;align-items:center;justify-content:center;font-size:13px}
+  .scorep .time{background:#1A0F05;border-radius:999px;padding:3px 10px;font-size:12.5px;color:#FFD98A;font-variant-numeric:tabular-nums}
+  .hearts{display:flex;gap:6px}
+  .hearts span{
+    width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;
+    background:#F9EED2;box-shadow:inset 0 0 0 1.5px #D9C494;transition:.3s;
+  }
+  .hearts span.off{filter:grayscale(1) brightness(.75)}
+
+  /* ---------- zincir listesi ---------- */
+  .chain{position:relative;z-index:2;margin:18px auto 0;width:var(--rw)}
+  .rows{display:grid;gap:5px}
+  .row{
+    position:relative;height:41px;border-radius:12px;display:flex;align-items:center;gap:9px;padding:0 13px;
+    font-weight:800;font-size:14.5px;
+  }
+  .row .num{
+    flex:none;min-width:21px;height:17px;border-radius:5px;background:var(--red);color:#fff;
+    font-size:11px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 4px;
+  }
+  .row .tt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .oku{
+    margin-left:auto;flex:none;border:none;background:none;cursor:pointer;font-family:inherit;
+    font-size:8.5px;font-weight:900;letter-spacing:1px;display:flex;align-items:center;gap:4px;
+  }
+  .row.dark{background:linear-gradient(180deg,#46301C,var(--brown));color:#FBF2DE;box-shadow:0 3px 8px rgba(70,40,10,.3)}
+  .row.dark .oku{color:#D9BE8C}
+  .row.goldr{background:linear-gradient(180deg,var(--gold2),var(--gold));color:var(--ink);box-shadow:0 3px 8px rgba(160,100,20,.35)}
+  .row.goldr .oku{color:#7A5210}
+  .row.slot{background:var(--slot);box-shadow:inset 0 2px 5px rgba(120,85,35,.18)}
+  .row.slot.active{
+    background:#EBDCB8;
+    outline:2px dashed var(--green);outline-offset:-2px;
+    animation:slotpulse 1.7s ease-in-out infinite;
+  }
+  @keyframes slotpulse{
+    0%,100%{box-shadow:inset 0 2px 5px rgba(120,85,35,.18)}
+    50%{box-shadow:inset 0 2px 5px rgba(120,85,35,.18), 0 0 16px rgba(46,158,91,.35)}
+  }
+  .land{animation:land .5s cubic-bezier(.34,1.5,.5,1)}
+  @keyframes land{
+    0%{transform:scale(.72);filter:brightness(1.5)}
+    60%{transform:scale(1.04)}
+    100%{transform:scale(1);filter:brightness(1)}
+  }
+
+  /* HEDEF kartı: dikey büyümüş, etiketi içinde, rengi farklı */
+  .row.goal{
+    height:62px;border-radius:14px;flex-direction:column;align-items:stretch;justify-content:center;gap:3px;
+    background:linear-gradient(180deg,var(--goalA),var(--goalB));color:#FFEBD2;
+    box-shadow:0 4px 12px rgba(90,35,15,.4), inset 0 0 0 1.5px rgba(245,166,35,.55);
+    padding:8px 13px;
+  }
+  .row.goal .lab{
+    font-size:8.5px;font-weight:900;letter-spacing:2.2px;color:var(--gold2);display:flex;align-items:center;gap:6px;
+  }
+  .row.goal .lab::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(245,166,35,.5),transparent)}
+  .row.goal .main{display:flex;align-items:center;gap:9px}
+  .row.goal .num{background:var(--gold);color:#4A2C0E}
+  .row.goal .oku{color:#E8B77E}
+  .row.goal.reached{
+    background:linear-gradient(180deg,#2F8A52,#1F6B3C);color:#EFFFF3;
+    box-shadow:0 4px 12px rgba(20,90,45,.4), inset 0 0 0 1.5px rgba(255,255,255,.35);
+  }
+  .row.goal.reached .lab{color:#BFF0CE}
+  .row.goal.reached .num{background:#fff;color:#1F6B3C}
+
+  /* sağdaki yol çizgisi */
+  .lifeline{position:absolute;top:0;right:-13px;width:10px;bottom:0;pointer-events:none}
+  .lifeline .line{
+    position:absolute;top:20px;bottom:31px;left:4px;width:0;
+    border-left:2px dashed var(--gold);opacity:.85;
+  }
+  .lifeline .cap{position:absolute;bottom:22px;left:-1.5px;color:var(--gold);font-size:11px}
+  .lifeline .tick{position:absolute;left:-3px;width:13px;height:13px;border-radius:50%;background:var(--gold);color:#fff;font-size:8px;display:flex;align-items:center;justify-content:center;font-weight:900}
+
+  /* ---------- soru paneli ---------- */
+  .panel{
+    position:relative;z-index:2;margin:16px auto 0;width:var(--rw);
+    background:var(--panel);border-radius:18px;padding:16px 10px 12px;
+    box-shadow:inset 0 0 0 1.5px rgba(120,85,35,.12), 0 4px 14px rgba(120,80,25,.12);
+  }
+  .panel h2{text-align:center;font-size:17.5px;font-weight:900;color:var(--ink);line-height:1.3;padding:0 14px}
+  .panel h2 .tname{color:var(--goalA)}
+  .panel .sub{text-align:center;font-size:12px;font-weight:800;color:#8A6C46;margin-top:3px}
+  .panel .sub b{color:var(--green)}
+  .opts{display:grid;gap:8px;margin-top:13px}
+  .opt{
+    position:relative;height:41px;border-radius:11px;border:none;cursor:pointer;font-family:inherit;
+    background:linear-gradient(180deg,#FDF7E4,var(--cream));
+    box-shadow:inset 0 0 0 1.5px #D9C494, 0 2px 5px rgba(120,80,25,.12);
+    display:flex;align-items:center;gap:8px;padding:0 14px;
+    font-size:14px;font-weight:800;color:var(--ink);text-align:left;
+    transition:transform .15s, opacity .3s, box-shadow .2s;
+  }
+  .opt .arr{margin-left:auto;font-weight:900;color:#6B4A2A}
+  .opt .crowd{
+    flex:none;background:var(--brown);color:#FFD98A;font-size:10px;font-weight:900;border-radius:999px;padding:2px 8px;
+    opacity:0;transition:opacity .3s;
+  }
+  .opt.showcrowd .crowd{opacity:1}
+  .opt:active{transform:scale(.98)}
+  .opt.dead{opacity:.4;pointer-events:none;color:#9A7C50}
+  .opt.wrong{animation:shake .45s}
+  .opt.wrong .tt2{color:var(--red)}
+  @keyframes shake{
+    0%,100%{margin-left:0} 20%{margin-left:-10px} 40%{margin-left:9px} 60%{margin-left:-6px} 80%{margin-left:5px}
+  }
+
+  /* ---------- jokerler ---------- */
+  .jokers{position:relative;z-index:3;display:flex;gap:10px;justify-content:center;padding:14px 22px calc(20px + env(safe-area-inset-bottom));margin-top:auto}
+  .jbtn{
+    flex:1;max-width:174px;height:45px;border-radius:999px;border:none;cursor:pointer;font-family:inherit;
+    font-size:12.5px;font-weight:900;display:flex;align-items:center;justify-content:center;gap:7px;
+    background:linear-gradient(180deg,#F9EED2,#EFDFB6);color:#8A6A42;
+    box-shadow:inset 0 0 0 1.8px #D9C494, 0 3px 7px rgba(120,80,25,.15);
+    transition:opacity .3s, transform .15s;
+  }
+  .jbtn:active{transform:scale(.97)}
+  .jbtn .ad{background:#3B2413;color:#FFD98A;font-size:8.5px;border-radius:4px;padding:1.5px 5px}
+  .jbtn:disabled{opacity:.45;cursor:default}
+
+  /* ---------- overlay ---------- */
+  .overlay{
+    position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:24px;
+    background:rgba(60,36,12,.45);backdrop-filter:blur(3px);
+    opacity:0;pointer-events:none;transition:opacity .3s;
+  }
+  .overlay.show{opacity:1;pointer-events:auto}
+  .sheet{
+    width:100%;max-width:340px;border-radius:22px;padding:26px 20px 22px;text-align:center;position:relative;
+    background:linear-gradient(180deg,#FDF6E2,#F3E4C0);color:var(--ink);
+    transform:translateY(16px) scale(.97);transition:transform .3s cubic-bezier(.34,1.3,.4,1);
+  }
+  .overlay.show .sheet{transform:none}
+  .sheet.winb{box-shadow:0 0 0 3px var(--green), 0 24px 60px rgba(60,30,5,.45)}
+  .sheet.loseb{box-shadow:0 0 0 3px var(--red), 0 24px 60px rgba(60,30,5,.45)}
+  .sheet.plain{box-shadow:0 0 0 2.5px var(--gold), 0 24px 60px rgba(60,30,5,.45)}
+  .banner{position:absolute;top:-15px;left:50%;transform:translateX(-50%);border-radius:9px;padding:6px 24px;font-weight:900;font-size:12.5px;letter-spacing:1.5px;color:#fff}
+  .banner.win{background:linear-gradient(180deg,#54C17E,#1F7A43)}
+  .banner.lose{background:linear-gradient(180deg,#FF6B5E,#B32E28)}
+  .sheet h1{font-size:23px;font-weight:900;margin:4px 0 2px}
+  .sheet .err{font-size:12.5px;font-weight:800;color:#8A6C46;margin-top:2px}
+  .sheet .err b{color:var(--red)}
+  .sheet .hudline{display:flex;justify-content:center;gap:12px;margin-top:10px;font-size:13px;font-weight:800;color:#8A6C46}
+  .mini{display:grid;gap:4px;margin-top:14px;text-align:left}
+  .mini .r{
+    height:30px;border-radius:8px;display:flex;align-items:center;gap:8px;padding:0 10px;
+    font-size:11px;font-weight:800;
+  }
+  .mini .r .n{flex:none;min-width:17px;height:14px;border-radius:4px;background:var(--red);color:#fff;font-size:9px;font-weight:900;display:flex;align-items:center;justify-content:center;padding:0 3px}
+  .mini .r.dark{background:var(--brown);color:#FBF2DE}
+  .mini .r.goldr{background:linear-gradient(180deg,var(--gold2),var(--gold));color:var(--ink)}
+  .mini .r.goal{background:linear-gradient(180deg,var(--goalA),var(--goalB));color:#FFEBD2}
+  .mini .r.goal .n{background:var(--gold);color:#4A2C0E}
+  .mini .r.empty{background:#E4D2A8;color:#B39A6B}
+  .mini .r .st{margin-left:auto}
+  .cta{
+    margin-top:16px;border:none;border-radius:999px;padding:12px 34px;font-size:14.5px;font-weight:900;cursor:pointer;font-family:inherit;
+    background:linear-gradient(180deg,var(--gold2),var(--gold));color:#4A2C0E;
+    box-shadow:0 4px 0 #A5720F,0 8px 20px rgba(120,70,10,.35);
+  }
+  .cta:active{transform:translateY(2px);box-shadow:0 2px 0 #A5720F}
+  .xclose{
+    position:absolute;top:12px;right:12px;width:30px;height:30px;border-radius:50%;border:none;cursor:pointer;
+    background:radial-gradient(circle at 35% 30%,#8A6A42,#5E4326);color:#F7E7C8;font-weight:900;
+  }
+  .sheet .kick{font-size:9px;letter-spacing:2.2px;font-weight:900;color:var(--gold-deep)}
+  .sheet .story{font-size:13px;line-height:1.6;color:#5C4326;margin-top:10px;text-align:left}
+  .spark{position:absolute;font-size:15px;animation:fall 1.7s ease-in forwards;pointer-events:none;z-index:30}
+  @keyframes fall{
+    0%{transform:translateY(-10px) rotate(0);opacity:1}
+    100%{transform:translateY(240px) rotate(320deg);opacity:0}
+  }
+</style>
+</head>
+<body>
+<div id="fit">
+<div class="phone" id="phone">
+
+  <header>
+    <button class="hbtn">✕</button>
+    <div class="logo">
+      <div class="tiles"><span>T</span><span>R</span><span>A</span><span>C</span><span>E</span></div>
+      <small>HER ŞEYİN BİR SEBEBİ VAR</small>
+    </div>
+    <div class="hgroup">
+      <button class="hbtn">📊</button>
+      <button class="hbtn">⚙️</button>
+    </div>
+  </header>
+
+  <div class="hud">
+    <div class="scorep"><span class="crown">👑</span><span id="score">0</span><span class="time" id="time">00:00</span></div>
+    <div class="hearts" id="hearts"><span>❤️</span><span>❤️</span><span>❤️</span></div>
+  </div>
+
+  <div class="chain">
+    <div class="rows" id="rows"></div>
+    <div class="lifeline">
+      <div class="line"></div>
+      <div class="tick" style="top:14px">✓</div>
+      <div class="cap">◀</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2 id="question"></h2>
+    <div class="sub" id="qsub"></div>
+    <div class="opts" id="opts"></div>
+  </div>
+
+  <div class="jokers">
+    <button class="jbtn" id="jokerBtn">🃏 %50 Joker <span class="ad">R</span></button>
+    <button class="jbtn" id="crowdBtn">Oyunculara Sor <span class="ad">R</span></button>
+  </div>
+
+  <!-- hikaye modalı -->
+  <div class="overlay" id="storyov">
+    <div class="sheet plain">
+      <button class="xclose" id="storyclose">✕</button>
+      <div class="kick" id="storykick">HİKAYE</div>
+      <h1 id="storytitle" style="font-size:18px"></h1>
+      <p class="story" id="storytext"></p>
+    </div>
+  </div>
+
+  <!-- bitiş -->
+  <div class="overlay" id="endov"><div class="sheet" id="endsheet"></div></div>
+</div>
+</div><!-- /fit -->
+
+<script>
+/* pencereye sığdır */
+(function(){
+  const fit=document.getElementById("fit");
+  function apply(){
+    const s=Math.min(window.innerWidth/402, window.innerHeight/874, 1.12);
+    fit.style.transform=`scale(${s})`;
+  }
+  window.addEventListener("resize",apply); apply();
+})();
+</script>
+<script>
+(function(){
+  "use strict";
+  /* ---------- içerik: arşiv #27 "Baruttan Dinamite" ---------- */
+  const CARDS=[
+    {t:"Çin'de Barutun İcadı",        story:"Çinli simyacılar \"ölümsüzlük iksirini\" ararken barutu buldu. Kaza gibi görünen bu keşif, dünyayı değiştirecekti."},
+    {t:"İpek Yolu ile Batı Ticareti", story:"Barut, kervanlarla önce Orta Doğu'ya, oradan da Avrupa'ya ulaştı."},
+    {t:"Ateşli Silahlar Devri",       story:"Barut savaşın kurallarını kökten değiştirdi. Ok ve yayın yerini top ve tüfek aldı."},
+    {t:"Madencilikte Patlamalar",     story:"Savaş alanından çıkan barut, dağları delip madenlere ulaşmak için kullanılmaya başlandı — ama kontrolü çok zordu."},
+    {t:"Alfred Nobel ve Nitrogliserin", story:"Nobel, çok tehlikeli olan nitrogliserini güvenli hale getirmenin yollarını aradı. Bir kaza ona büyük bir keşif yaptıracaktı."},
+    {t:"İlk Güvenli Patlayıcı",       story:"Nobel patlayıcıyı emici bir maddeyle karıştırıp kontrol altına aldı; artık taşınabilir ve öngörülebilirdi."},
+    {t:"Dinamitin Patenti",           story:"Nobel buluşunu \"dinamit\" adıyla tescilledi. İnşaatlar ve kazılar çok daha hızlı ilerleyebiliyordu."},
+  ];
+  const DECOYS=[
+    ["Roma'ya Hediye Gönderilmesi","Büyük İskender'in Seferleri"],
+    ["Şövalye Turnuvaları","Kale Duvarlarının Kalınlaşması"],
+    ["Kimya Laboratuvarları","Demir-Çelik Fabrikaları"],
+    ["Barutun Yasaklanması","İlk Dinamit Fabrikası"],
+    ["Nobel Barış Ödülü","TNT'nin Keşfi"],
+  ];
+  const CROWD=[ [58,17,25],[61,22,17],[46,31,23],[52,19,29],[64,13,23] ];
+  const SCORES=[20,14,8];
+  /* editör panelindeki trace başlığı — "X'ten Y'ye" formatı soruya doğrudan oturur */
+  const TITLE="Baruttan Dinamite";
+
+  /* step 0..4 → kart index step+1 doldurulur; kart 0 ve 6 baştan açık */
+  let step=0, errorsThisStep=0, totalErrors=0, score=0, secs=0, over=false, picking=false;
+  let jokerUsed=false, crowdUsed=false;
+  const $=id=>document.getElementById(id);
+
+  const t0=setInterval(()=>{ if(over)return; secs++;
+    $("time").textContent=String(Math.floor(secs/60)).padStart(2,"0")+":"+String(secs%60).padStart(2,"0");
+  },1000);
+
+  const filled=i=> i===0 || i===6 || i<=step;
+
+  /* ---------- zincir ---------- */
+  function renderRows(landIdx){
+    let h="";
+    for(let i=0;i<6;i++){
+      if(filled(i)){
+        const cls=i===0?"dark":"goldr";
+        h+=`<div class="row ${cls} ${landIdx===i?"land":""}" data-i="${i}">
+          <span class="num">${i+1}.</span><span class="tt">${CARDS[i].t}</span>
+          <button class="oku">OKU 📖</button>
+        </div>`;
+      }else{
+        h+=`<div class="row slot ${i===step+1?"active":""}" ${i===step+1?'id="activeslot"':""}></div>`;
+      }
+    }
+    /* HEDEF: dikey büyümüş, etiket içeride, rengi farklı */
+    const done=step>=5;
+    h+=`<div class="row goal ${done?"reached":""} ${landIdx===6?"land":""}" data-i="6">
+      <span class="lab">${done?"✓ ZİNCİR TAMAMLANDI":"🏁 ZİNCİRİN SONU"}</span>
+      <span class="main"><span class="num">7.</span><span class="tt">${CARDS[6].t}</span>
+        <button class="oku">OKU 📖</button></span>
+    </div>`;
+    $("rows").innerHTML=h;
+    $("rows").querySelectorAll(".row[data-i] .oku").forEach(b=>{
+      b.addEventListener("click",e=>{
+        e.stopPropagation();
+        const i=+b.closest(".row").dataset.i;
+        $("storykick").textContent="KART "+(i+1)+" · HİKAYE";
+        $("storytitle").textContent=CARDS[i].t;
+        $("storytext").textContent=CARDS[i].story;
+        $("storyov").classList.add("show");
+      });
+    });
+  }
+
+  function renderHud(){
+    $("score").textContent=score;
+    const hs=$("hearts").children;
+    for(let i=0;i<3;i++) hs[i].classList.toggle("off", i>=3-totalErrors);
+    if(totalErrors>=3) setTimeout(lose,650);
+  }
+
+  /* ---------- adım ---------- */
+  function renderStep(landIdx){
+    errorsThisStep=0;
+    renderRows(landIdx); renderHud();
+    $("question").innerHTML=`<span class="tname">${TITLE}</span> giden yolda sıradaki adım ne?`;
+    if(step>=5){ $("qsub").innerHTML=`<b>Zincir tamamlandı!</b>`; $("opts").innerHTML=""; setTimeout(win,900); return; }
+    $("qsub").innerHTML=`<b>${step+2}. Sıra</b> için seçimini yap`;
+    const opts=[{t:CARDS[step+1].t,ok:true},{t:DECOYS[step][0],ok:false},{t:DECOYS[step][1],ok:false}]
+      .map((o,i)=>({...o,crowd:CROWD[step][i]}))
+      .sort(()=>Math.random()-.5);
+    $("opts").innerHTML="";
+    opts.forEach(o=>{
+      const b=document.createElement("button");
+      b.className="opt";
+      b.innerHTML=`<span class="tt2">${o.t}</span><span class="crowd">%${o.crowd}</span><span class="arr">→</span>`;
+      b.dataset.ok=o.ok?"1":"0";
+      b.addEventListener("click",()=>pick(b));
+      $("opts").appendChild(b);
+    });
+  }
+
+  function pick(btn){
+    if(over||picking) return;
+    if(btn.dataset.ok==="1"){
+      picking=true;
+      score+=SCORES[Math.min(errorsThisStep,2)];
+      fly(btn);
+      setTimeout(()=>{ picking=false; step++; renderStep(step); },600);
+    }else{
+      errorsThisStep++; totalErrors++;
+      btn.classList.add("wrong");
+      renderHud();
+      setTimeout(()=>btn.classList.add("dead"),430);
+    }
+  }
+
+  /* seçilen satır aktif slota uçar */
+  function fly(btn){
+    const target=$("activeslot");
+    if(!target) return;
+    const scale=$("phone").getBoundingClientRect().width/402;
+    const br=btn.getBoundingClientRect(), tr=target.getBoundingClientRect();
+    const dx=((tr.left+tr.width/2)-(br.left+br.width/2))/scale;
+    const dy=((tr.top+tr.height/2)-(br.top+br.height/2))/scale;
+    btn.style.zIndex=9; btn.style.pointerEvents="none";
+    btn.style.transition="transform .5s cubic-bezier(.45,.05,.25,1.05), opacity .15s .45s";
+    btn.style.transform=`translate(${dx}px,${dy}px)`;
+    btn.style.opacity="0";
+    target.style.outlineStyle="solid";
+    target.style.boxShadow="inset 0 2px 5px rgba(120,85,35,.18), 0 0 22px rgba(46,158,91,.5)";
+  }
+
+  /* ---------- jokerler ---------- */
+  $("jokerBtn").addEventListener("click",()=>{
+    if(jokerUsed||over) return; jokerUsed=true; $("jokerBtn").disabled=true;
+    const wrongs=[...document.querySelectorAll('.opt[data-ok="0"]')].filter(c=>!c.classList.contains("dead"));
+    if(wrongs.length) wrongs[Math.floor(Math.random()*wrongs.length)].classList.add("dead");
+  });
+  $("crowdBtn").addEventListener("click",()=>{
+    if(crowdUsed||over) return; crowdUsed=true; $("crowdBtn").disabled=true;
+    document.querySelectorAll(".opt").forEach(c=>c.classList.add("showcrowd"));
+  });
+
+  /* ---------- hikaye ---------- */
+  $("storyclose").addEventListener("click",()=>$("storyov").classList.remove("show"));
+  $("storyov").addEventListener("click",e=>{ if(e.target===$("storyov")) $("storyov").classList.remove("show"); });
+
+  /* ---------- bitiş ---------- */
+  function miniChain(failAt=-1){
+    let h='<div class="mini">';
+    for(let i=0;i<7;i++){
+      const isG=i===6;
+      const f=filled(i);
+      const cls=isG?"goal":(f?(i===0?"dark":"goldr"):"empty");
+      const st=(failAt!==-1&&i===failAt)?"✕":(f?"✓":"");
+      h+=`<div class="r ${cls}"><span class="n">${i+1}.</span>${f||isG?CARDS[i].t:"—"}<span class="st">${st}</span></div>`;
+    }
+    return h+"</div>";
+  }
+  function hudline(){
+    return `<div class="hudline"><span>👑 ${score}</span><span>⏱ ${$("time").textContent}</span><span>${"❤️".repeat(3-totalErrors)}${"🖤".repeat(totalErrors)}</span></div>`;
+  }
+  function win(){
+    if(over) return; over=true; clearInterval(t0);
+    if(totalErrors===0) score+=20;
+    sparkle();
+    $("endsheet").className="sheet winb";
+    $("endsheet").innerHTML=`<div class="banner win">KAZANDIN</div>
+      <h1>Zincir tamamlandı!</h1>
+      <div class="err">✕ Toplam hata sayısı <b>${totalErrors}</b></div>
+      ${hudline()} ${miniChain()}
+      <button class="cta" onclick="location.reload()">Tekrar Oyna ↺</button>`;
+    $("endov").classList.add("show");
+  }
+  function lose(){
+    if(over) return; over=true; clearInterval(t0);
+    $("endsheet").className="sheet loseb";
+    $("endsheet").innerHTML=`<div class="banner lose">KAZANAMADIN</div>
+      <h1>Trace kırıldı</h1>
+      <div class="err">✕ Toplam hata sayısı <b>3</b></div>
+      ${hudline()} ${miniChain(step+1)}
+      <button class="cta" onclick="location.reload()">Tekrar Oyna ↺</button>`;
+    $("endov").classList.add("show");
+  }
+  function sparkle(){
+    for(let i=0;i<26;i++){
+      const s=document.createElement("span");
+      s.className="spark"; s.textContent=["✨","⭐","🎉","🧨"][i%4];
+      s.style.left=(5+Math.random()*90)+"%";
+      s.style.top=(8+Math.random()*30)+"%";
+      s.style.animationDelay=(Math.random()*.7)+"s";
+      $("phone").appendChild(s); setTimeout(()=>s.remove(),2700);
+    }
+  }
+
+  renderStep();
+})();
+</script>
+</body>
+</html>
