@@ -1,48 +1,26 @@
-<title>Trace — "Cevabı Gör" Akış Kurgusu</title>
+<title>Trace — "Cevabı Gör" Akışı</title>
 <style>
   :root{
-    --page:#f3ecdf; --ink:#33261a; --muted:#8a7458; --card:#fbf6ea; --line:#e2d5bd;
-    --accent:#c8821a; --beat-on:#fdf1d2;
-    /* Trace oyun paleti — Figma frame 58/59'dan örneklendi; telefon ekranı tema değişiminden etkilenmez */
+    --page:#f3ecdf; --card:#fbf6ea; --line:#e2d5bd; --ink:#33261a; --accent:#c8821a;
+    /* Trace oyun paleti — Figma frame 58/59'dan; telefon ekranı tema değişiminden etkilenmez */
     --t-bg1:#dcc7a4; --t-bg2:#cbb289;
-    --t-cream:#fdeed0; --t-cream2:#f8e4bc;
-    --t-brown:#402a12; --t-brown2:#5a3b20;
-    --t-amber:#f6b23c; --t-amber-d:#c8821a;
-    --t-red:#d8504d; --t-green:#2e9e53; --t-gold:#dd9c22;
-    --t-text:#43290f;
+    --t-red:#d8504d; --t-green:#2e9e53;
     --round:"Arial Rounded MT Bold","Trebuchet MS","Segoe UI",system-ui,sans-serif;
   }
   @media (prefers-color-scheme: dark){
-    :root{ --page:#211a11; --ink:#f0e6d3; --muted:#a68e6b; --card:#2c2416; --line:#42371f; --accent:#e2a92e; --beat-on:#3a2f1a; }
+    :root{ --page:#211a11; --card:#2c2416; --line:#42371f; --ink:#f0e6d3; --accent:#e2a92e; }
   }
-  :root[data-theme="dark"]{ --page:#211a11; --ink:#f0e6d3; --muted:#a68e6b; --card:#2c2416; --line:#42371f; --accent:#e2a92e; --beat-on:#3a2f1a; }
-  :root[data-theme="light"]{ --page:#f3ecdf; --ink:#33261a; --muted:#8a7458; --card:#fbf6ea; --line:#e2d5bd; --accent:#c8821a; --beat-on:#fdf1d2; }
+  :root[data-theme="dark"]{ --page:#211a11; --card:#2c2416; --line:#42371f; --ink:#f0e6d3; --accent:#e2a92e; }
+  :root[data-theme="light"]{ --page:#f3ecdf; --card:#fbf6ea; --line:#e2d5bd; --ink:#33261a; --accent:#c8821a; }
 
   *{box-sizing:border-box}
-  body{background:var(--page);color:var(--ink);font-family:-apple-system,"Segoe UI",system-ui,sans-serif;margin:0;padding:32px 20px 80px;line-height:1.5}
-  .wrap{max-width:1120px;margin:0 auto}
-  header.top h1{font-family:var(--round);font-size:clamp(24px,3.4vw,34px);margin:0 0 6px;text-wrap:balance;letter-spacing:.3px}
-  header.top p{color:var(--muted);max-width:66ch;margin:0 0 8px}
-  header.top p b{color:var(--ink)}
-  .legend{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 30px}
-  .legend span{font-size:12.5px;font-weight:700;padding:5px 12px;border-radius:99px;border:1.5px solid var(--line);background:var(--card)}
-  .legend .lg-earn{border-color:#e0a33a;color:#a06a12}
-  .legend .lg-shown{border-color:#c8a45c;color:var(--muted)}
-
-  main.stage{display:grid;grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:44px;align-items:start}
-  @media (max-width:900px){ main.stage{grid-template-columns:1fr} }
-
-  /* ---------- TELEFON ---------- */
-  .phone-col{position:sticky;top:20px}
-  @media (max-width:900px){ .phone-col{position:static} }
-  .controls{display:flex;gap:10px;align-items:center;margin-bottom:14px}
+  body{background:var(--page);margin:0;padding:28px 16px 60px;display:flex;flex-direction:column;align-items:center;gap:14px}
   .controls button{font-family:var(--round);font-size:13px;font-weight:700;padding:8px 16px;border-radius:99px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
   .controls button:hover{border-color:var(--accent)}
   .controls button:focus-visible,.phone button:focus-visible{outline:2.5px solid var(--accent);outline-offset:2px}
-  .state-label{font-size:12.5px;color:var(--muted);font-weight:600}
 
-  .phone{width:100%;max-width:410px;border-radius:52px;border:10px solid #241505;background:linear-gradient(170deg,var(--t-bg1),var(--t-bg2));position:relative;overflow:hidden;box-shadow:0 24px 60px rgba(40,20,0,.28);font-family:var(--round);color:var(--t-text)}
-  .screen{padding:20px 14px 22px;position:relative;min-height:740px}
+  .phone{width:100%;max-width:410px;border-radius:52px;border:10px solid #241505;background:linear-gradient(170deg,var(--t-bg1),var(--t-bg2));position:relative;overflow:hidden;box-shadow:0 24px 60px rgba(40,20,0,.28);font-family:var(--round);color:#43290f}
+  .screen{padding:20px 14px 22px;position:relative;min-height:720px}
 
   .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:2px}
   .hdr .rnd{width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#8a6134,#5d3d1c);color:#f6e4b8;display:grid;place-items:center;font-size:15px;box-shadow:0 2px 0 rgba(60,30,0,.4)}
@@ -76,7 +54,6 @@
   .stat .bar{height:7px;border-radius:99px;background:#e5d3a8;margin-top:6px;overflow:hidden}
   .stat .bar i{display:block;height:100%;width:42%;background:#8a4a28;border-radius:99px}
 
-  /* zincir */
   .chain{display:flex;flex-direction:column;gap:9px;perspective:900px}
   .card{border-radius:13px;padding:11px 13px;font-size:13.5px;font-weight:800;display:grid;grid-template-columns:auto 1fr auto;gap:4px 10px;align-items:center;position:relative;transition:transform .22s ease-in;transform-origin:center;min-height:44px}
   .card.flipping{transform:rotateX(88deg)}
@@ -95,169 +72,69 @@
   .card.pulse{animation:pulse .4s ease 2}
   @keyframes pulse{50%{transform:scale(1.025)}}
 
-  /* footer CTA'lar */
-  .foot{margin-top:16px;display:flex;flex-direction:column;gap:9px}
-  .foot .upsell{text-align:center;font-size:13.5px;font-weight:800;color:#3c2410}
+  .foot{margin-top:16px;display:flex;flex-direction:column;gap:9px;transition:opacity .35s}
+  .foot.done{opacity:0;pointer-events:none}
   .btn{font-family:var(--round);border:none;border-radius:99px;padding:13px 18px;font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.3px;transition:transform .12s}
   .btn:active{transform:scale(.97)}
-  .btn.gold{background:linear-gradient(#f8c35c,#eda52d);color:#4a2c12;box-shadow:0 4px 0 #a9731a}
   .btn.beige{background:linear-gradient(#f7ecd2,#eeddb6);color:#5d4322;border:1.5px solid #cdb488;box-shadow:0 3px 0 #b49a6a}
-  .foot .cd{text-align:center;font-size:12.5px;font-weight:800;color:#6b4416}
-  .foot .cd b{font-variant-numeric:tabular-nums;color:#3c2410}
-  .foot .seen{text-align:center;font-size:11px;font-weight:800;color:#a9731a}
-
-  /* sheet */
-  .backdrop{position:absolute;inset:0;background:rgba(40,20,4,0);pointer-events:none;transition:background .3s;z-index:8}
-  .backdrop.on{background:rgba(40,20,4,.45);pointer-events:auto}
-  .sheet{position:absolute;left:8px;right:8px;bottom:8px;z-index:9;background:linear-gradient(#fdf2d2,#f8e7b8);border:2.5px solid #a9731a;border-radius:24px;padding:18px 16px;transform:translateY(115%);transition:transform .3s cubic-bezier(.32,1.3,.5,1)}
-  .sheet.on{transform:translateY(0)}
-  .sheet h3{margin:0 0 8px;font-size:18px;color:#3c2410;text-wrap:balance}
-  .sheet p{margin:0 0 10px;font-size:12.5px;font-weight:700;color:#6b4a22;line-height:1.45}
-  .sheet ul{list-style:none;margin:0 0 14px;padding:0;display:flex;flex-direction:column;gap:7px}
-  .sheet li{font-size:12.5px;font-weight:800;color:#5d4322;background:#fdf3d4;border:1.5px solid #ddb96a;border-radius:11px;padding:8px 11px;display:flex;gap:8px;align-items:center}
-  .sheet .row{display:flex;flex-direction:column;gap:8px}
-  .sheet .btn.gold{background:linear-gradient(#f8c35c,#eda52d);color:#4a2c12;box-shadow:0 4px 0 #a9731a}
-  .sheet .alt-link{background:none;border:none;font-family:var(--round);font-size:12px;font-weight:800;color:#a9731a;text-decoration:underline;cursor:pointer;padding:6px}
-
-  /* ---------- KURGU NOTLARI ---------- */
-  .notes h2{font-family:var(--round);font-size:20px;margin:0 0 4px}
-  .notes>p{color:var(--muted);font-size:14px;margin:0 0 18px;max-width:58ch}
-  .notes>p b{color:var(--ink)}
-  ol.beats{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;counter-reset:beat -1}
-  ol.beats li{counter-increment:beat;background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:13px 16px 13px 52px;position:relative;transition:background .3s,border-color .3s}
-  ol.beats li::before{content:counter(beat);position:absolute;left:15px;top:13px;width:26px;height:26px;border-radius:9px;background:var(--line);color:var(--ink);font-family:var(--round);font-weight:800;font-size:13px;display:grid;place-items:center;transition:background .3s,color .3s}
-  ol.beats li.active{background:var(--beat-on);border-color:var(--accent)}
-  ol.beats li.active::before{background:var(--accent);color:#fff}
-  ol.beats h4{margin:0 0 3px;font-size:14.5px;font-family:var(--round)}
-  ol.beats .t{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.6px;text-transform:uppercase;margin-left:6px}
-  ol.beats p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
-  ol.beats p b{color:var(--ink)}
-  .why{margin-top:26px;background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:16px 18px}
-  .why h3{font-family:var(--round);font-size:15px;margin:0 0 8px}
-  .why ul{margin:0;padding-left:18px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
-  .why b{color:var(--ink)}
 
   @media (prefers-reduced-motion: reduce){
-    .banner,.sheet,.card{transition:none!important;animation:none!important}
+    .banner,.card,.foot{transition:none!important;animation:none!important}
   }
 </style>
 
-<div class="wrap">
-  <header class="top">
-    <h1>Trace — "Cevabı Gör" Akışı · v3</h1>
-    <p>Sadeleştirilmiş sürüm: kart altı açıklamalar ve kartlar arası bağlantı halkaları kaldırıldı — açıklamalar istatistiklerdeki <b>"Trace'in Hikayesi"</b>nde yaşamaya devam eder. Açılan adımlar sarı yerine <b>açık renk</b>, "Tekrar Oyna" <b>sarı</b>, "Cevabı Gör" <b>bej</b>. Telefon tıklanabilir: <b>"Cevabı Gör"</b>e basın.</p>
-    <div class="legend">
-      <span class="lg-earn">Dolu amber = oyuncunun geçtiği adım (küçük ✗'ler o adımdaki hatalar)</span>
-      <span class="lg-shown">Açık renk = gösterilen cevap</span>
+<div class="controls"><button type="button" data-act="reset">↺</button></div>
+
+<div class="phone">
+  <div id="phoneInner">
+  <div class="screen">
+    <div class="hdr">
+      <div class="rnd">✕</div>
+      <div class="logo"><div class="word">TRACE</div><div class="slogan">HER ŞEYİN BİR SEBEBİ VAR</div></div>
+      <div class="rnd">⚙</div>
     </div>
-  </header>
 
-  <main class="stage">
-    <section class="phone-col">
-      <div class="controls">
-        <button type="button" data-act="reset">↺ Kurguyu baştan başlat</button>
-        <span class="state-label" id="stateLabel">Durum: Kayıp ekranı</span>
+    <div class="banner in">KAZANAMADIN</div>
+
+    <div class="panel" id="panel">
+      <div class="p-top">
+        <div class="err"><span class="x">✕</span> Toplam hata sayısı <b>3</b></div>
+        <button class="p-close" type="button" aria-label="Kapat">✕</button>
+      </div>
+      <h2 class="p-title" id="pTitle">Trace kırıldı</h2>
+
+      <div class="scorerow">
+        <span class="crown">♛</span><span class="score">897</span>
+        <span class="timer">00:59</span>
+        <div class="hearts"><i>🤎</i><i>🤎</i><i>🤎</i></div>
       </div>
 
-      <div class="phone">
-        <div id="phoneInner">
-        <div class="screen" id="screen">
-          <div class="hdr">
-            <div class="rnd">✕</div>
-            <div class="logo"><div class="word">TRACE</div><div class="slogan">HER ŞEYİN BİR SEBEBİ VAR</div></div>
-            <div class="rnd">⚙</div>
-          </div>
-
-          <div class="banner in" id="banner">KAZANAMADIN</div>
-
-          <div class="panel" id="panel">
-            <div class="p-top">
-              <div class="err"><span class="x">✕</span> Toplam hata sayısı <b>3</b></div>
-              <button class="p-close" type="button" aria-label="Kapat">✕</button>
-            </div>
-            <h2 class="p-title" id="pTitle">Trace kırıldı</h2>
-
-            <div class="scorerow">
-              <span class="crown">♛</span><span class="score">897</span>
-              <span class="timer">00:59</span>
-              <div class="hearts"><i>🤎</i><i>🤎</i><i>🤎</i></div>
-            </div>
-
-            <div class="stat">
-              <div class="ic">🔗</div>
-              <div style="flex:1">Bugünün oyuncularının <b>%42'si</b> zinciri tamamlamayı başardı.<div class="bar"><i></i></div></div>
-            </div>
-
-            <div class="chain" id="chain">
-              <div class="card brown"><span class="num">1</span><span>Çin'de Barutun İcadı</span><span></span></div>
-              <div class="card amber"><span class="num">2</span><span>İpek Yolu ile Batı Ticareti</span><span class="mark ok">✓</span></div>
-              <div class="card amber"><span class="num">3</span><span>Avrupa'da besin ihtiyacının karşılanması</span><span class="mark ok">✓<span class="miss">✗✗</span></span></div>
-              <div class="card amber"><span class="num">4</span><span>İpek Yolu ile Batı Ticareti</span><span class="mark ok">✓</span></div>
-              <div class="card broken" id="c5"><span class="num grey" id="c5num">5</span><span id="c5txt">Zincir burada kırıldı</span><span class="mark no" id="c5mark">✕</span></div>
-              <div class="card empty" id="c6"><span id="c6txt" style="opacity:.5;font-size:15px">?</span></div>
-              <div class="card brown"><span class="num">7</span><span>Dinamitin Patenti</span><span></span></div>
-            </div>
-
-            <div class="foot" id="foot">
-              <div class="upsell"><b>Premium</b>'a geç oyunu tamamla!</div>
-              <button class="btn gold" type="button" data-act="premium">Tekrar Oyna</button>
-              <button class="btn beige" type="button" data-act="see" id="seeBtn">Cevabı Gör</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="backdrop" id="backdrop"></div>
-
-        <div class="sheet" id="premiumSheet" role="dialog" aria-label="Premium">
-          <h3>👑 Bugünü Tamamla</h3>
-          <p>Retry Premium'a özel: aynı Trace'i bugün yeniden oyna. Kazanırsan gün <b>tamamlandı</b> sayılır.</p>
-          <ul>
-            <li>🔁 Aynı gün yeniden oynama hakkı</li>
-            <li>🔥 Serin kırılmadan devam eder</li>
-            <li>🚫 Reklamsız Bundle Games deneyimi</li>
-          </ul>
-          <div class="row">
-            <button class="btn gold" type="button" data-act="premium-close">Premium'a Geç</button>
-            <button class="alt-link" type="button" data-act="premium-close">Şimdi değil</button>
-          </div>
-        </div>
-        </div>
+      <div class="stat">
+        <div class="ic">🔗</div>
+        <div style="flex:1">Bugünün oyuncularının <b>%42'si</b> zinciri tamamlamayı başardı.<div class="bar"><i></i></div></div>
       </div>
-    </section>
 
-    <aside class="notes">
-      <h2>Kurgu — beat beat</h2>
-      <p>Tek kural korundu: <b>yeşil ve dolu amber yalnızca oynayarak kazanılır.</b> Gösterilen cevaplar açık renkli kartla gelir — rozetsiz, ✓'siz. Sonuç değişmez: "KAZANAMADIN" bandı yerinde kalır, ceza yoktur.</p>
-      <ol class="beats" id="beats">
-        <li data-beat="0" class="active"><h4>Kayıp ekranı <span class="t">giriş · Figma frame 59 birebir</span></h4>
-          <p>Sarı "Tekrar Oyna"nın altına bej bir <b>"Cevabı Gör"</b> butonu. Renk hiyerarşisi işi görür: sarı = birincil aksiyon (Premium retry), bej = sakin ikincil. Boş kutuya soluk bir "?" kondu — boşluk "eksik render" değil "bilinmeyen halka" olarak okunsun diye.</p></li>
-        <li data-beat="1"><h4>Mod değişimi <span class="t">0 – 0,5 sn</span></h4>
-          <p>Panel çerçevesi kırmızıdan ambere yumuşar, "Trace kırıldı" başlığı <b>"İşte zincirin devamı"</b>na döner. Banner kırmızı kalır: sonuç değişmedi, sadece öğrenme moduna geçildi.</p></li>
-        <li data-beat="2"><h4>Kırık kart açılır <span class="t">0,5 – 1,4 sn</span></h4>
-          <p>"Zincir burada kırıldı" kartı önce dikkat için hafifçe nefes alır (scale 1,025 ×2), sonra X ekseninde kapanıp <b>doğru cevapla</b> açılır: açık renkli kart, soluk numara, işaret yok. Kazanılan dolu amber kartlardan ilk bakışta ayrışır.</p></li>
-        <li data-beat="3"><h4>Boş kutu dolar <span class="t">1,5 – 2,3 sn</span></h4>
-          <p>"?" kutusu aynı flip ile son bilinmeyen halkaya dönüşür. Reveal yukarıdan aşağı, zincirin doğal okuma yönünde akar. Bağlantıların "sebebi" burada anlatılmaz — merak istatistiklerdeki "Trace'in Hikayesi"ne taşınır.</p></li>
-        <li data-beat="4"><h4>Footer sadeleşir <span class="t">2,6 sn</span></h4>
-          <p>"Cevabı Gör" yerini "Cevap görüldü ✓" etiketine ve <b>Sonraki Trace geri sayımına</b> bırakır. Sarı "Tekrar Oyna" aynen kalır — retry hâlâ günü tamamlamanın tek yolu. Kilit yok, damga yok, seri cezası yok.</p></li>
-        <li data-beat="P"><h4>Alt akış: Tekrar Oyna <span class="t">free kullanıcı</span></h4>
-          <p>Free kullanıcıda paywall sheet açılır (doküman 6.4: Retry yalnız Premium). Satılan şey cevap değil: günü tamamlama, seri ve skor.</p></li>
-      </ol>
-
-      <div class="why">
-        <h3>Neden bu kurgu?</h3>
-        <ul>
-          <li><b>Dökümanla uyumlu:</b> Öğrenme katmanı (6.3) herkese açık; kart kart açıklamalar istatistiklerdeki "Trace'in Hikayesi"nde, oyun sonu ekranı sade kalır.</li>
-          <li><b>Gösterildi ≠ kazanıldı:</b> Açık renkli kart dili sayesinde cevabı görmek zaferi taklit etmez; ✓ ve dolu amber yalnızca oynanarak kazanılır.</li>
-          <li><b>Premium değeri korunur:</b> Retry'ın sattığı şey cevap değil, günü tamamlama + seri + skor. İsteğe bağlı koruma: cevap görüldükten sonra retry ile kazanılan oyunda hatasız/hız bonuslarını kapatmak yeterli.</li>
-        </ul>
+      <div class="chain">
+        <div class="card brown"><span class="num">1</span><span>Çin'de Barutun İcadı</span><span></span></div>
+        <div class="card amber"><span class="num">2</span><span>İpek Yolu ile Batı Ticareti</span><span class="mark ok">✓</span></div>
+        <div class="card amber"><span class="num">3</span><span>Avrupa'da besin ihtiyacının karşılanması</span><span class="mark ok">✓<span class="miss">✗✗</span></span></div>
+        <div class="card amber"><span class="num">4</span><span>İpek Yolu ile Batı Ticareti</span><span class="mark ok">✓</span></div>
+        <div class="card broken" id="c5"><span class="num grey" id="c5num">5</span><span id="c5txt">Zincir burada kırıldı</span><span class="mark no" id="c5mark">✕</span></div>
+        <div class="card empty" id="c6"><span id="c6txt" style="opacity:.5;font-size:15px">?</span></div>
+        <div class="card brown"><span class="num">7</span><span>Dinamitin Patenti</span><span></span></div>
       </div>
-    </aside>
-  </main>
+
+      <div class="foot" id="foot">
+        <button class="btn beige" type="button" data-act="see" id="seeBtn">Cevabı Gör</button>
+      </div>
+    </div>
+  </div>
+  </div>
 </div>
 
 <script>
 (function(){
-  const $=(s,r)=>(r||document).querySelector(s);
+  const $=s=>document.querySelector(s);
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   let timers=[];
   const later=(ms,fn)=>timers.push(setTimeout(fn,reduced?0:ms));
@@ -265,12 +142,6 @@
 
   const phoneInner=$('#phoneInner');
   const initialHTML=phoneInner.innerHTML;
-  const label=$('#stateLabel');
-
-  function setBeat(b){
-    document.querySelectorAll('#beats li').forEach(li=>li.classList.toggle('active',li.dataset.beat===String(b)));
-  }
-  function setLabel(t){label.textContent='Durum: '+t}
 
   function flip(card,mutate){
     card.classList.add('flipping');
@@ -283,13 +154,9 @@
 
   function playReveal(){
     $('#seeBtn').disabled=true;
-    setLabel('Cevap açılıyor…');
-    // B1: mod değişimi
-    setBeat(1);
     $('#panel').classList.add('answer');
     swapTitle('İşte zincirin devamı');
-    // B2: kırık kart
-    later(500,()=>{setBeat(2);$('#c5').classList.add('pulse')});
+    later(500,()=>$('#c5').classList.add('pulse'));
     later(900,()=>{
       const c5=$('#c5');c5.classList.remove('pulse');
       flip(c5,()=>{
@@ -299,8 +166,7 @@
         $('#c5mark').remove();
       });
     });
-    // B3: boş kutu
-    later(1500,()=>{setBeat(3);
+    later(1500,()=>{
       const c6=$('#c6');
       flip(c6,()=>{
         c6.classList.remove('empty');c6.classList.add('revealed');
@@ -312,32 +178,13 @@
         c6.appendChild(document.createElement('span'));
       });
     });
-    // B4: footer
-    later(2600,()=>{setBeat(4);setLabel('Cevap görüldü — retry açık');
-      $('#foot').innerHTML=
-        '<div class="upsell"><b>Premium</b>\'a geç oyunu tamamla!</div>'+
-        '<button class="btn gold" type="button" data-act="premium">Tekrar Oyna</button>'+
-        '<div class="seen">Cevap görüldü ✓</div>'+
-        '<div class="cd">Sonraki Trace: <b id="cd">--:--:--</b></div>';
-    });
+    later(2400,()=>$('#foot').classList.add('done'));
   }
-
-  // gece yarısına geri sayım
-  setInterval(()=>{
-    const el=document.getElementById('cd'); if(!el) return;
-    const n=new Date(), m=new Date(n); m.setHours(24,0,0,0);
-    let s=Math.floor((m-n)/1000);
-    const p=v=>String(v).padStart(2,'0');
-    el.textContent=p(Math.floor(s/3600))+':'+p(Math.floor(s%3600/60))+':'+p(s%60);
-  },1000);
 
   document.addEventListener('click',e=>{
     const b=e.target.closest('[data-act]'); if(!b) return;
-    const act=b.dataset.act;
-    if(act==='see'){playReveal()}
-    if(act==='premium'){$('#backdrop').classList.add('on');$('#premiumSheet').classList.add('on');setBeat('P');setLabel('Premium retry teklifi')}
-    if(act==='premium-close'){$('#backdrop').classList.remove('on');$('#premiumSheet').classList.remove('on')}
-    if(act==='reset'){clearTL();phoneInner.innerHTML=initialHTML;setBeat(0);setLabel('Kayıp ekranı')}
+    if(b.dataset.act==='see') playReveal();
+    if(b.dataset.act==='reset'){clearTL();phoneInner.innerHTML=initialHTML}
   });
 })();
 </script>
