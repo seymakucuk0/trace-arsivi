@@ -318,8 +318,8 @@
   ];
   const CROWD=[ [58,17,25],[61,22,17],[46,31,23],[52,19,29],[64,13,23] ];
   const SCORES=[20,14,8];
-  /* editör panelindeki trace başlığı — "X'ten Y'ye" formatı soruya doğrudan oturur */
-  const TITLE="Baruttan Dinamite";
+  /* soru başlığı 7. kartın adıyla kurulur: "{7. kart}'a giden yolda sıradaki adım ne?" */
+  const GOAL_DATIVE="Dinamitin Patentine";
 
   /* step 0..4 → kart index step+1 doldurulur; kart 0 ve 6 baştan açık */
   let step=0, errorsThisStep=0, totalErrors=0, score=0, secs=0, over=false, picking=false;
@@ -377,7 +377,7 @@
   function renderStep(landIdx){
     errorsThisStep=0;
     renderRows(landIdx); renderHud();
-    $("question").innerHTML=`<span class="tname">${TITLE}</span> giden yolda sıradaki adım ne?`;
+    $("question").innerHTML=`<span class="tname">${GOAL_DATIVE}</span> giden yolda sıradaki adım ne?`;
     if(step>=5){ $("qsub").innerHTML=`<b>Zincir tamamlandı!</b>`; $("opts").innerHTML=""; setTimeout(win,900); return; }
     $("qsub").innerHTML=`<b>${step+2}. Sıra</b> için seçimini yap`;
     const opts=[{t:CARDS[step+1].t,ok:true},{t:DECOYS[step][0],ok:false},{t:DECOYS[step][1],ok:false}]
