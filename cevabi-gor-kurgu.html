@@ -95,7 +95,10 @@
   }
 </style>
 
-<div class="controls"><button type="button" data-act="reset">↺</button></div>
+<div class="controls">
+  <button type="button" data-act="reset">↺ İlk kayıp</button>
+  <button type="button" data-act="retry-loss">Retry sonrası kayıp</button>
+</div>
 
 <div class="phone">
   <div id="phoneInner">
@@ -211,6 +214,29 @@
     $('#confirmSheet').classList.toggle('on',on);
   }
 
+  function revealCards(){
+    const c5=$('#c5');
+    c5.classList.remove('broken');c5.classList.add('revealed');
+    $('#c5txt').textContent='Nitrogliserinin Keşfi';
+    $('#c5num').className='num light';
+    $('#c5mark').remove();
+    const c6=$('#c6');
+    c6.classList.remove('empty');c6.classList.add('revealed');
+    c6.style.gridTemplateColumns='auto 1fr auto';
+    const t=$('#c6txt');t.style.opacity='1';t.style.fontSize='';
+    t.textContent="Nobel'in Güvenli Patlayıcı Arayışı";
+    const num=document.createElement('span');num.className='num light';num.textContent='6';
+    c6.insertBefore(num,t);
+    c6.appendChild(document.createElement('span'));
+  }
+
+  // retry hakkını kullanıp yine kaybeden oyuncu: cevap direkt açık, footer yok
+  function showRetryLoss(){
+    clearTL();phoneInner.innerHTML=initialHTML;
+    revealCards();
+    $('#foot').remove();
+  }
+
   document.addEventListener('click',e=>{
     const b=e.target.closest('[data-act]'); if(!b) return;
     const act=b.dataset.act;
@@ -218,6 +244,7 @@
     if(act==='cancel') sheet(false);
     if(act==='confirm'){sheet(false);playReveal()}
     if(act==='reset'){clearTL();phoneInner.innerHTML=initialHTML}
+    if(act==='retry-loss') showRetryLoss();
   });
 })();
 </script>
