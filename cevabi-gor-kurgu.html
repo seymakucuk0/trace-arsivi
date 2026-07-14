@@ -72,11 +72,13 @@
   .card.pulse{animation:pulse .4s ease 2}
   @keyframes pulse{50%{transform:scale(1.025)}}
 
-  .foot{margin-top:16px;display:flex;flex-direction:column;gap:9px;transition:opacity .35s}
-  .foot.done{opacity:0;pointer-events:none}
-  .btn{font-family:var(--round);border:none;border-radius:99px;padding:13px 18px;font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.3px;transition:transform .12s}
+  .foot{margin-top:16px;display:flex;flex-direction:column;gap:9px}
+  .foot .upsell{text-align:center;font-size:13.5px;font-weight:800;color:#3c2410}
+  .btn{font-family:var(--round);border:none;border-radius:99px;padding:13px 18px;font-size:14.5px;font-weight:900;cursor:pointer;letter-spacing:.3px;transition:transform .12s,opacity .35s}
   .btn:active{transform:scale(.97)}
+  .btn.gold{background:linear-gradient(#f8c35c,#eda52d);color:#4a2c12;box-shadow:0 4px 0 #a9731a}
   .btn.beige{background:linear-gradient(#f7ecd2,#eeddb6);color:#5d4322;border:1.5px solid #cdb488;box-shadow:0 3px 0 #b49a6a}
+  .btn.gone{opacity:0;pointer-events:none}
 
   @media (prefers-reduced-motion: reduce){
     .banner,.card,.foot{transition:none!important;animation:none!important}
@@ -125,6 +127,8 @@
       </div>
 
       <div class="foot" id="foot">
+        <div class="upsell">🔥 Serini kaybetme! <b>Premium</b>'a geç, tekrar oyna.</div>
+        <button class="btn gold" type="button" data-act="retry">Tekrar Oyna</button>
         <button class="btn beige" type="button" data-act="see" id="seeBtn">Cevabı Gör</button>
       </div>
     </div>
@@ -178,7 +182,7 @@
         c6.appendChild(document.createElement('span'));
       });
     });
-    later(2400,()=>$('#foot').classList.add('done'));
+    later(2400,()=>$('#seeBtn').classList.add('gone'));
   }
 
   document.addEventListener('click',e=>{
