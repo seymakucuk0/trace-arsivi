@@ -203,9 +203,7 @@
         c6.appendChild(document.createElement('span'));
       });
     });
-    later(2400,()=>{
-      $('#foot').innerHTML='<button class="btn locked" type="button" disabled>🔒 Tekrar Oyna</button>';
-    });
+    later(2400,()=>{$('#foot').remove()});
   }
 
   function sheet(on){
