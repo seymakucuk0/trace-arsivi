@@ -79,6 +79,16 @@
   .btn.gold{background:linear-gradient(#f8c35c,#eda52d);color:#4a2c12;box-shadow:0 4px 0 #a9731a}
   .btn.beige{background:linear-gradient(#f7ecd2,#eeddb6);color:#5d4322;border:1.5px solid #cdb488;box-shadow:0 3px 0 #b49a6a}
   .btn.gone{opacity:0;pointer-events:none}
+  .btn.locked{background:#e6dcc4;color:#9b8c6c;border:1.5px solid #c4b490;box-shadow:none;cursor:not-allowed}
+
+  .backdrop{position:absolute;inset:0;background:rgba(40,20,4,0);pointer-events:none;transition:background .3s;z-index:8}
+  .backdrop.on{background:rgba(40,20,4,.45);pointer-events:auto}
+  .sheet{position:absolute;left:8px;right:8px;bottom:8px;z-index:9;background:linear-gradient(#fdf2d2,#f8e7b8);border:2.5px solid #a9731a;border-radius:24px;padding:18px 16px;transform:translateY(115%);transition:transform .3s cubic-bezier(.32,1.3,.5,1)}
+  .sheet.on{transform:translateY(0)}
+  .sheet h3{margin:0 0 8px;font-size:18px;color:#3c2410;text-wrap:balance}
+  .sheet p{margin:0 0 14px;font-size:13px;font-weight:700;color:#6b4a22;line-height:1.5}
+  .sheet p b{color:#b13d3b}
+  .sheet .row{display:flex;flex-direction:column;gap:8px}
 
   @media (prefers-reduced-motion: reduce){
     .banner,.card,.foot{transition:none!important;animation:none!important}
@@ -133,6 +143,17 @@
       </div>
     </div>
   </div>
+
+  <div class="backdrop" id="backdrop"></div>
+
+  <div class="sheet" id="confirmSheet" role="dialog" aria-label="Cevabı görme uyarısı">
+    <h3>Cevabı görmek istiyor musun?</h3>
+    <p>Cevabı görürsen bugün için <b>Tekrar Oyna kapanır</b> — serini kurtarma şansın kalmaz.</p>
+    <div class="row">
+      <button class="btn gold" type="button" data-act="cancel">Vazgeç</button>
+      <button class="btn beige" type="button" data-act="confirm">Yine de Gör</button>
+    </div>
+  </div>
   </div>
 </div>
 
@@ -182,13 +203,23 @@
         c6.appendChild(document.createElement('span'));
       });
     });
-    later(2400,()=>$('#seeBtn').classList.add('gone'));
+    later(2400,()=>{
+      $('#foot').innerHTML='<button class="btn locked" type="button" disabled>🔒 Tekrar Oyna</button>';
+    });
+  }
+
+  function sheet(on){
+    $('#backdrop').classList.toggle('on',on);
+    $('#confirmSheet').classList.toggle('on',on);
   }
 
   document.addEventListener('click',e=>{
     const b=e.target.closest('[data-act]'); if(!b) return;
-    if(b.dataset.act==='see') playReveal();
-    if(b.dataset.act==='reset'){clearTL();phoneInner.innerHTML=initialHTML}
+    const act=b.dataset.act;
+    if(act==='see') sheet(true);
+    if(act==='cancel') sheet(false);
+    if(act==='confirm'){sheet(false);playReveal()}
+    if(act==='reset'){clearTL();phoneInner.innerHTML=initialHTML}
   });
 })();
 </script>
